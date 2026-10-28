@@ -69,6 +69,8 @@ fun CableScreen() {
   val rIec = s(R.string.cable_rho_iec); val rGuide = s(R.string.cable_rho_guide)
   val lAmps = s(R.string.cable_load_mode_amps); val lKw = s(R.string.cable_load_mode_kw)
   val iecLabel = s(R.string.cable_kha_iec)
+  val insPvc = s(R.string.cable_insul_pvc); val insXlpe = s(R.string.cable_insul_xlpe)
+  val loaded2 = s(R.string.cable_loaded_2); val loaded3 = s(R.string.cable_loaded_3)
   val groupLabels = listOf(R.string.cable_group_1, R.string.cable_group_2, R.string.cable_group_3, R.string.cable_group_4, R.string.cable_group_5).map { s(it) }
   fun isErr(e: CableError) = outcome is CableOutcome.Failure && outcome.error == e
 
@@ -116,9 +118,9 @@ fun CableScreen() {
       Text(s(R.string.cable_kha_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
       ChipRow(listOf<String?>(null) + tables.map { it.name }, userTable?.name, { it ?: iecLabel }) { name -> scope.launch { store.select(name) } }
       if (useIec) {
-        ChipRow(CableInsulation.entries, insulation, { if (it == CableInsulation.PVC) s(R.string.cable_insul_pvc) else s(R.string.cable_insul_xlpe) }) { insulation = it }
+        ChipRow(CableInsulation.entries, insulation, { if (it == CableInsulation.PVC) insPvc else insXlpe }) { insulation = it }
         Text(s(R.string.cable_loaded_label), style = MaterialTheme.typography.labelLarge)
-        ChipRow(listOf(2, 3), loaded, { if (it == 2) s(R.string.cable_loaded_2) else s(R.string.cable_loaded_3) }) { loaded = it }
+        ChipRow(listOf(2, 3), loaded, { if (it == 2) loaded2 else loaded3 }) { loaded = it }
         Text(s(R.string.cable_method_label), style = MaterialTheme.typography.labelLarge)
         ChipRow(IecKha.methodsFor(loaded), iecMethod, { it.code }) { method = it; arrangement = it.defaultGroupingArrangement }
         Text(s(R.string.cable_method_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
