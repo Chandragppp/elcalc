@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="copied">Disalin</string>
+<string name="share">Bagikan</string>
+<string name="close">Tutup</string>
+<string name="clear">Bersihkan</string>
+<string name="about">Tentang</string>
+<string name="tab_basic">Dasar</string>
+<string name="tab_cable">Kabel</string>
+<string name="tab_motor">Motor</string>
+<string name="tab_cap">Kapasitor</string>
+<string name="tab_unbalance">3 Fasa</string>
+<string name="subtab_ohm">Ohm &amp; Daya</string>
+<string name="subtab_ac_power">Daya 1F / 3F</string>
+<string name="subtab_trafo">Trafo</string>
+<string name="independent_disclaimer" formatted="false">Alat bantu estimasi independen. Verifikasi desain akhir dengan SNI 0225:2020 (PUIL 2020) / IEC 60364 dan data pabrikan. (Independent estimation tool. Verify final designs against SNI 0225:2020 (PUIL 2020) / IEC 60364 and manufacturer data.)</string>
+<string name="about_title">Tentang Panel Calc</string>
+<string name="about_version">Versi %1$s</string>
+<string name="about_body">Kalkulator kelistrikan industri &amp; panel offline oleh ControlEngineerID. Bayar sekali, tanpa langganan (Pay once, no subscription).</string>
+<string name="pro_unlock">Buka Pro</string>
+<string name="pro_lifetime">Pro (seumur hidup)</string>
+<string name="pro_active_until">Pro aktif s/d %1$s</string>
+<string name="pro_trial_days">Trial Pro: sisa %1$d hari</string>
+<string name="pro_trial_hours">Trial Pro: sisa %1$d jam</string>
+<string name="trial_welcome_title">Trial Pro 3 Hari Aktif</string>
+<string name="trial_welcome_message">Semua fitur Pro (Motor DOL &amp; Star-Delta, Kapasitor Bank, Ketidakseimbangan 3 Fasa) gratis 3 hari. Bayar sekali, tanpa langganan; Dasar &amp; Kabel tetap gratis.</string>
+<string name="paywall_trial_ended">Trial berakhir</string>
+<string name="privacy_options">Pilihan privasi</string>
+<string name="paywall_title">Panel Calc Pro</string>
+<string name="paywall_one_time_badge">Bayar sekali, tanpa langganan (Pay once, no subscription)</string>
+<string name="paywall_subtitle">Dasar &amp; Kabel tetap gratis offline. Buka seluruh kalkulator panel industri:</string>
+<string name="paywall_features" formatted="false">• Starter Motor 3 Fasa (DOL &amp; Star-Delta: Main/Delta 58% In, Star 33% In, TOR &amp; pengaman)\n• Kapasitor Bank (kVAR), penurunan arus ΔI, &amp; saran 5/6/8 step\n• Ketidakseimbangan 3 Fasa (NEMA MG 1) &amp; panduan derating\n• Bagikan ringkasan hasil teks rapi</string>
+<string name="paywall_reward_disclosure">Tonton 1 iklan video untuk membuka fitur Pro 24 jam (tetap aktif offline).</string>
+<string name="paywall_watch_ad">Tonton 1 iklan: Pro 24 jam</string>
+<string name="paywall_buy_price">Beli Pro — Bayar Sekali (%1$s)</string>
+<string name="paywall_buy_unavailable">Beli Pro (Bayar Sekali)</string>
+<string name="billing_unavailable_reason">Produk pro_lifetime belum tersedia di Google Play pada perangkat ini.</string>
+<string name="ad_unavailable">Iklan belum tersedia atau offline. Kalkulator gratis tetap dapat digunakan.</string>
+<string name="purchase_pending">Pembelian menunggu konfirmasi Google Play.</string>
+<string name="err_positive">Masukkan angka valid lebih besar dari 0</string>
+<string name="err_cosphi">Faktor daya cos φ harus di antara 0 dan 1,0</string>
+<string name="err_eta">Efisiensi η harus di antara 0 dan 1,0</string>
+<string name="err_percent" formatted="false">Persentase / Uk (%) harus di antara 0 dan 100</string>
+<string name="err_factor">Faktor koreksi (k_t, k_g) harus di antara 0 dan 2,0</string>
+<string name="err_mult">Kelipatan arus start harus 1,0..15,0</string>
+<string name="err_target_cosphi">cos φ target harus lebih besar dari cos φ awal</string>
+<string name="ohm_title">Hukum Ohm &amp; Daya DC</string>
+<string name="ohm_hint">Isi tepat 2 kolom dari V, I, R, atau P (kosongkan 2 lainnya) untuk menghitung sisanya otomatis.</string>
+<string name="ohm_v_label">Tegangan V (V)</string>
+<string name="ohm_i_label">Arus I (A)</string>
+<string name="ohm_r_label">Resistansi R (Ω)</string>
+<string name="ohm_p_label">Daya P (W)</string>
+<string name="ohm_formula_used">Rumus</string>
+<string name="ohm_err_need_two">Isi tepat 2 nilai positif (kosongkan 2 lainnya)</string>
+<string name="acp_title">Daya AC 1 Fasa &amp; 3 Fasa</string>
+<string name="acp_hint">Pilih fasa dan tegangan, lalu isi I, P, atau S beserta cos φ untuk menghitung P (kW), S (kVA), Q (kVAR), dan I (A).</string>
+<string name="phase_1p">1 Fasa</string>
+<string name="phase_3p">3 Fasa</string>
+<string name="acp_voltage_label">Tegangan sistem (V)</string>
+<string name="acp_input_mode_label">Besaran diketahui</string>
+<string name="acp_mode_current">Arus I (A)</string>
+<string name="acp_mode_kw">Daya aktif P (kW)</string>
+<string name="acp_mode_kva">Daya semu S (kVA)</string>
+<string name="acp_cosphi_label">Faktor daya cos φ (0..1)</string>
+<string name="acp_out_current">Arus saluran I</string>
+<string name="acp_out_p">Daya aktif P</string>
+<string name="acp_out_s">Daya semu S</string>
+<string name="acp_out_q">Daya reaktif Q</string>
+<string name="trafo_title">Arus Nominal &amp; Hubung Singkat Trafo</string>
+<string name="trafo_hint">Masukkan kapasitas (kVA) atau In2 (A), tegangan primer/sekunder, dan Uk (%) untuk menghitung In dan Isc.</string>
+<string name="trafo_mode_kva">Dari kVA</string>
+<string name="trafo_mode_isec">Dari In2 (A)</string>
+<string name="trafo_kva_label">Kapasitas S (kVA)</string>
+<string name="trafo_isec_label">Arus sekunder In2 (A)</string>
+<string name="trafo_vpri_label">Tegangan primer V1 (V)</string>
+<string name="trafo_vsec_label">Tegangan sekunder V2 (V)</string>
+<string name="trafo_uk_label" formatted="false">Impedansi Uk (%)</string>
+<string name="trafo_out_kva">Kapasitas S</string>
+<string name="trafo_out_ipri">Arus primer In1</string>
+<string name="trafo_out_isec">Arus sekunder In2</string>
+<string name="trafo_out_isc">Arus hubung singkat Isc</string>
+<string name="trafo_formula_note" formatted="false">In = S×1000 / (√3·V); Isc = In2 / (Uk/100) asumsi bus MV ideal.</string>
+<string name="cable_title">Susut Tegangan &amp; Penampang Minimum Kabel</string>
+<string name="cable_hint">Pilih fasa, konduktor, penampang (mm²), panjang satu arah (m), dan beban untuk menghitung ΔV serta penampang minimum.</string>
+<string name="cable_material_cu">Tembaga (Cu)</string>
+<string name="cable_material_al">Aluminium (Al)</string>
+<string name="cable_rho_method_label">Acuan resistivitas</string>
+<string name="cable_rho_iec">IEC 60364-5-52 Lampiran G (Cu 0,0225; Al 0,036)</string>
+<string name="cable_rho_guide">Installation Guide (Cu 0,0237; Al 0,0376)</string>
+<string name="cable_section_label">Penampang S (mm²)</string>
+<string name="cable_length_label">Panjang kabel (m)</string>
+<string name="cable_load_mode_amps">Arus beban (A)</string>
+<string name="cable_load_mode_kw">Daya beban (kW)</string>
+<string name="cable_load_amps_label">Arus beban I (A)</string>
+<string name="cable_limit_label" formatted="false">Batas ΔV maks (%)</string>
+<string name="cable_limit_lighting" formatted="false">3% Penerangan</string>
+<string name="cable_limit_other" formatted="false">5% Lainnya</string>
+<string name="cable_out_dv_pct" formatted="false">Susut tegangan ΔV (%)</string>
+<string name="cable_out_v_end">Tegangan ujung</string>
+<string name="cable_status_ok" formatted="false">OK / AMAN (≤ batas %1$s%%)</string>
+<string name="cable_status_exceed" formatted="false">MELEBIHI BATAS (&gt; %1$s%%)</string>
+<string name="cable_out_min_section">Penampang min ΔV ≤ batas</string>
+<string name="cable_min_section_exceeds_300">&gt; 300 mm² (paralel)</string>
+<string name="cable_kha_title">Pemeriksaan KHA — Opsional</string>
+<string name="cable_kha_hint">Isi KHA dari tabel Anda sendiri; mengecek I_beban ≤ KHA × k_t × k_g tanpa menyalin tabel berhak cipta.</string>
+<string name="cable_kha_input_label">KHA dari tabel Anda (A) — opsional</string>
+<string name="cable_k_temp_label">Faktor suhu k_t</string>
+<string name="cable_k_group_label">Faktor grup k_g</string>
+<string name="cable_kha_ok">OK (I_beban ≤ KHA efektif)</string>
+<string name="cable_kha_overload">MELEBIHI KHA (I_beban &gt; KHA efektif)</string>
+<string name="cable_local_types_title">Referensi Singkat Jenis Kabel Lokal</string>
+<string name="cable_types_body">• NYA: Kabel tunggal Cu berisolasi PVC untuk pipa konduit ruang kering.\n• NYM: Kabel multi-inti Cu berselubung PVC putih untuk dinding/tray.\n• NYY: Kabel multi-inti Cu berselubung PVC hitam untuk indoor/outdoor.\n• NYFGbY: Kabel Cu berpelindung baja (armoured) untuk tanam langsung.\n• NYAF: Kabel serabut fleksibel tunggal Cu untuk pengawatan panel.</string>
+<string name="cable_source_note" formatted="false">1F ΔV = 2·I·L·(R cos φ + X sin φ), 3F ΔV = √3·I·L·(R cos φ + X sin φ), X = 0,08 Ω/km. Batas default 3%/5% &amp; ρ IEC 60364-5-52 Lampiran G: PERLU CEK MANUAL terhadap SNI 0225:2020.</string>
+<string name="motor_title">Motor 3 Fasa &amp; Starter (DOL / Star-Delta)</string>
+<string name="motor_hint">Isi daya motor (kW atau HP; 1 HP = 745,7 W), V, cos φ, η (0..1), dan metode start untuk menghitung kontaktor AC-3, TOR, dan pengaman.</string>
+<string name="motor_power_kw_label">Daya motor P (kW)</string>
+<string name="motor_power_hp_label">Daya motor P (HP)</string>
+<string name="motor_voltage_label">Tegangan saluran V (V)</string>
+<string name="motor_eta_label">Efisiensi η (0..1)</string>
+<string name="motor_start_mult_label">Kelipatan start DOL (× In)</string>
+<string name="motor_method_label">Metode pengasutan</string>
+<string name="motor_method_dol">DOL (Direct On-Line)</string>
+<string name="motor_method_sd">Star-Delta (Bintang-Segitiga)</string>
+<string name="motor_out_power_conv">Konversi daya</string>
+<string name="motor_out_in">Arus nominal In</string>
+<string name="motor_out_start_i">Estimasi arus start</string>
+<string name="motor_out_km">Kontaktor Utama KM (AC-3)</string>
+<string name="motor_out_kdelta">Kontaktor Delta KΔ (AC-3)</string>
+<string name="motor_out_kstar">Kontaktor Star KY (AC-3)</string>
+<string name="motor_out_tor">Setelan TOR</string>
+<string name="motor_out_breaker">Rentang pengaman (MCB/MCCB/MPCB)</string>
+<string name="motor_std_nearest">standar ≥ %1$d A</string>
+<string name="motor_std_exceeds">&gt; 630 A</string>
+<string name="motor_curve_note">Gunakan MPCB (setel In), MCB kurva D/K (10..20× In), atau MCCB motor. Star-Delta: pasang TOR di cabang fasa setelah Main (setel ≈ 0,58× In).</string>
+<string name="motor_source_note" formatted="false">In = P/(√3·V·cos φ·η); 1 HP = 745,7 W. Star-Delta: KM &amp; KΔ ≈ 0,58·In, KY ≈ 0,33·In, TOR fasa ≈ 0,58·In, start Y ≈ 1/3 DOL. Rating standar: PERLU CEK MANUAL (IEC 60947-4-1).</string>
+<string name="cap_title">Kapasitor Bank (Perbaikan Faktor Daya)</string>
+<string name="cap_hint">Isi daya aktif P (kW), V, cos φ awal, dan cos φ target untuk menghitung kebutuhan kVAR, penurunan arus, dan saran 5/6/8 step.</string>
+<string name="cap_cosphi1_label">cos φ awal (0..1)</string>
+<string name="cap_cosphi2_label">cos φ target (0..1)</string>
+<string name="cap_out_q">Kebutuhan reaktif Q</string>
+<string name="cap_out_i_saved">Penurunan arus ΔI</string>
+<string name="cap_steps_title">Saran Step Regulator (5 / 6 / 8 Step)</string>
+<string name="cap_step_row" formatted="false">%1$d step: ideal %2$s | std %3$s kVAR × %1$d = %4$s kVAR (%5$s A/step)</string>
+<string name="cap_source_note" formatted="false">Q = P·(tan φ1 − tan φ2) kVAR; ΔI% = (1 − cos φ1/cos φ2)×100%. Ukuran step (2,5..100 kVAR): PERLU CEK MANUAL untuk harmonisa/reaktor.</string>
+<string name="unb_title">Ketidakseimbangan Tegangan &amp; Arus 3 Fasa (NEMA MG 1)</string>
+<string name="unb_hint">Pilih Tegangan atau Arus lalu isi 3 nilai fasa terukur untuk menghitung rata-rata, deviasi maks, dan % unbalance NEMA MG 1.</string>
+<string name="unb_mode_voltage">Tegangan (V)</string>
+<string name="unb_mode_current">Arus (A)</string>
+<string name="unb_phase_label">Fasa %1$s (%2$s)</string>
+<string name="unb_out_avg">Rata-rata</string>
+<string name="unb_out_max_dev">Deviasi maks</string>
+<string name="unb_out_pct" formatted="false">Ketidakseimbangan (%)</string>
+<string name="unb_out_temp_rise">Tambahan suhu belitan</string>
+<string name="unb_status_v_ok" formatted="false">OK / AMAN (≤ 1,0% NEMA MG 1)</string>
+<string name="unb_status_v_warn" formatted="false">PERINGATAN (&gt; 1,0%): Derating motor sesuai NEMA MG 1</string>
+<string name="unb_status_v_crit" formatted="false">KRITIS (&gt; 5,0%): Jangan operasikan motor</string>
+<string name="unb_status_i_ok" formatted="false">Ketidakseimbangan arus normal (≤ 10,0%)</string>
+<string name="unb_status_i_warn" formatted="false">Ketidakseimbangan arus TINGGI (&gt; 10,0%)</string>
+<string name="unb_derating_note" formatted="false">NEMA MG 1 / US DOE Tip Sheet #7: Unbalance tegangan &gt; 1% wajib derating motor (&gt; 5% dilarang); kenaikan suhu ≈ 2×(%Unbalance)² %. Kurva Fig. 20-2: PERLU CEK MANUAL.</string>
+</resources>
