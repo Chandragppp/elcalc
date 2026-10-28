@@ -11,7 +11,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.edit
@@ -160,40 +159,40 @@ fun ReportHeaderDialog(
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        DecimalField(
+        OutlinedTextField(
           value = circuitName,
           onValueChange = { circuitName = it },
-          label = s(R.string.report_field_circuit),
+          label = { Text(s(R.string.report_field_circuit)) },
+          singleLine = true,
           modifier = Modifier.fillMaxWidth().testTag("report_circuit_input"),
-          keyboardType = KeyboardType.Text,
         )
-        DecimalField(
+        OutlinedTextField(
           value = author,
           onValueChange = { author = it },
-          label = s(R.string.report_field_author),
+          label = { Text(s(R.string.report_field_author)) },
+          singleLine = true,
           modifier = Modifier.fillMaxWidth().testTag("report_author_input"),
-          keyboardType = KeyboardType.Text,
         )
-        DecimalField(
+        OutlinedTextField(
           value = company,
           onValueChange = { company = it },
-          label = s(R.string.report_field_company),
+          label = { Text(s(R.string.report_field_company)) },
+          singleLine = true,
           modifier = Modifier.fillMaxWidth().testTag("report_company_input"),
-          keyboardType = KeyboardType.Text,
         )
-        DecimalField(
+        OutlinedTextField(
           value = location,
           onValueChange = { location = it },
-          label = s(R.string.report_field_location),
+          label = { Text(s(R.string.report_field_location)) },
+          singleLine = true,
           modifier = Modifier.fillMaxWidth().testTag("report_location_input"),
-          keyboardType = KeyboardType.Text,
         )
-        DecimalField(
+        OutlinedTextField(
           value = notes,
           onValueChange = { notes = it },
-          label = s(R.string.report_field_notes),
+          label = { Text(s(R.string.report_field_notes)) },
+          singleLine = false,
           modifier = Modifier.fillMaxWidth().testTag("report_notes_input"),
-          keyboardType = KeyboardType.Text,
         )
       }
     },
