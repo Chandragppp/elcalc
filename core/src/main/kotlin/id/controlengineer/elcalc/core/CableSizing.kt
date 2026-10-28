@@ -11,7 +11,8 @@ import kotlin.math.sqrt
 * - Metode 2 (Electrical Installation Guide, https://www.electrical-installation.org/enwiki/Calculation_of_voltage_drop_in_steady_load_conditions):
 *   rho_Cu = 0.0237, rho_Al = 0.0376 Ohm*mm2/m, X = 0.00008 Ohm/m.
 * - Batas default 3% penerangan & 5% lainnya (https://www.electrical-installation.org/enwiki/Maximum_voltage_drop_limit -> PERLU CEK MANUAL).
-* - Rekomendasi HANYA dari susut tegangan; KHA tetap dicek pengguna (aplikasi TIDAK menyalin tabel PUIL/IEC).
+* - KHA: aplikasi TIDAK menyalin tabel PUIL/IEC; pengguna mengisi tabel KHA sendiri (KhaTable). Rekomendasi = ukuran terkecil
+*   yang lolos dV DAN I_beban <= KHA * k_suhu * k_grup. Tanpa tabel, rekomendasi hanya dari dV dan ditandai belum cek KHA.
 */
 enum class ConductorMaterial(val rhoIec60364OhmMm2PerM: Double, val rhoInstallationGuideOhmMm2PerM: Double) {
   COPPER(0.0225, 0.0237), ALUMINIUM(0.0360, 0.0376),
@@ -26,28 +27,59 @@ enum class CableCircuit(val dropFactor: Double, val powerFactor: Double) {
 enum class LocalCableType(val code: String) { NYA("NYA"), NYM("NYM"), NYY("NYY"), NYFGBY("NYFGbY"), NYAF("NYAF") }
 enum class CableError {
   INVALID_VOLTAGE, INVALID_LENGTH, INVALID_LOAD, INVALID_COS_PHI,
-  INVALID_LIMIT_PERCENT, INVALID_KHA_VALUE, INVALID_CORRECTION_FACTOR,
+  INVALID_LIMIT_PERCENT, INVALID_CORRECTION_FACTOR,
 }
 
-data class KhaCheckResult(val baseKhaA: Double, val tempFactor: Double, val groupFactor: Double, val deratedKhaA: Double, val loadCurrentA: Double, val passed: Boolean)
+/** Tabel KHA milik pengguna: penampang (mm²) ke KHA dasar (A) dari tabel resmi yang ia pegang. */
+data class KhaTable(val name: String, val ampsBySection: Map<Double, Double>) {
+  fun ampsFor(sectionMm2: Double): Double? = ampsBySection.entries.firstOrNull { kotlin.math.abs(it.key - sectionMm2) < 1e-9 }?.value
+}
 
-/** Hasil susut tegangan untuk satu penampang; marginPercent = batas - dV% (positif = sisa, negatif = kurang). */
+/** Simpan/baca daftar tabel KHA sebagai teks sederhana: satu tabel per baris "nama|1.5=14.5;2.5=19.5". */
+object KhaTableCodec {
+  fun encode(tables: List<KhaTable>): String = tables.joinToString("\n") { t ->
+    val clean = t.name.replace("|", " ").replace("\n", " ").trim()
+    clean + "|" + t.ampsBySection.entries.sortedBy { it.key }.joinToString(";") { "${it.key}=${it.value}" }
+  }
+
+  fun decode(text: String?): List<KhaTable> = text.orEmpty().lines().mapNotNull { line ->
+    val parts = line.split("|", limit = 2)
+    if (parts.size != 2 || parts[0].isBlank()) return@mapNotNull null
+    val map = parts[1].split(";").mapNotNull { kv ->
+      val (k, v) = kv.split("=").takeIf { it.size == 2 } ?: return@mapNotNull null
+      val sec = k.toDoubleOrNull(); val amps = v.toDoubleOrNull()
+      if (sec == null || amps == null || sec <= 0.0 || amps <= 0.0) null else sec to amps
+    }.toMap()
+    KhaTable(parts[0], map)
+  }
+}
+
+/**
+ * Hasil satu penampang. marginPercent = batas - dV% (positif = sisa, negatif = kurang).
+ * deratedKhaA = KHA tabel * k_suhu * k_grup (null bila tanpa tabel / ukuran tidak ada di tabel); khaMarginA = KHA efektif - I_beban.
+ */
 data class SectionOption(
   val sectionMm2: Double, val resistancePerKmOhm: Double, val voltageDropV: Double,
   val voltageDropPercent: Double, val receivingVoltageV: Double, val marginPercent: Double, val withinLimit: Boolean,
-)
+  val deratedKhaA: Double? = null, val khaMarginA: Double? = null,
+) {
+  val khaOk: Boolean? get() = khaMarginA?.let { it >= -1e-9 }
+  /** Lolos semua cek yang tersedia: dV, dan KHA bila tabel dipakai (ukuran tanpa nilai KHA dianggap tidak lolos). */
+  fun passes(khaChecked: Boolean): Boolean = withinLimit && (!khaChecked || khaOk == true)
+}
 
 data class CableSizingResult(
   val circuit: CableCircuit, val material: ConductorMaterial, val resistivityMethod: ResistivityMethod,
   val rhoOhmMm2PerM: Double, val voltageV: Double, val lengthM: Double, val loadCurrentA: Double, val cosPhi: Double,
   val maxDropLimitPercent: Double,
-  /** Penampang standar terkecil dengan dV <= batas; null bila 300 mm² pun melebihi batas. */
+  /** true bila tabel KHA dipakai; false = rekomendasi hanya dari dV (belum aman secara termal). */
+  val khaChecked: Boolean,
+  /** Penampang standar terkecil yang lolos dV (+ KHA bila dicek); null bila tak ada yang lolos. */
   val recommended: SectionOption?,
-  /** Satu ukuran di bawah rekomendasi (melebihi batas); bila tak ada rekomendasi = 300 mm². */
+  /** Satu ukuran di bawah rekomendasi (tidak lolos); bila tak ada rekomendasi = ukuran terbesar yang dihitung. */
   val smaller: SectionOption?,
-  /** Satu ukuran di atas rekomendasi (sisa lebih besar). */
+  /** Satu ukuran di atas rekomendasi. */
   val larger: SectionOption?,
-  val khaCheck: KhaCheckResult?,
 )
 
 sealed class CableOutcome {
@@ -88,7 +120,7 @@ object CableCalculator {
     resistivityMethod: ResistivityMethod = ResistivityMethod.IEC_60364_ANNEX_G,
     lengthM: Double?, voltageV: Double?, loadInputMode: CableLoadInputMode = CableLoadInputMode.CURRENT_AMPS,
     loadValue: Double?, cosPhi: Double?, maxDropLimitPercent: Double?,
-    userKhaTableA: Double? = null, userKhaTextBlank: Boolean = true,
+    khaTable: KhaTable? = null,
     tempCorrectionFactor: Double? = 1.0, groupCorrectionFactor: Double? = 1.0,
   ): CableOutcome {
     if (voltageV == null || !voltageV.isFinite() || voltageV <= 0.0) return CableOutcome.Failure(CableError.INVALID_VOLTAGE)
@@ -100,29 +132,30 @@ object CableCalculator {
     if (maxDropLimitPercent == null || !maxDropLimitPercent.isFinite() || maxDropLimitPercent <= 0.0 || maxDropLimitPercent >= 100.0) return CableOutcome.Failure(CableError.INVALID_LIMIT_PERCENT)
 
     val loadCurrentA = if (loadInputMode == CableLoadInputMode.CURRENT_AMPS) loadValue else (loadValue * 1000.0) / (circuit.powerFactor * voltageV * pf)
-    val khaCheck = if (!userKhaTextBlank) {
-      if (userKhaTableA == null || !userKhaTableA.isFinite() || userKhaTableA <= 0.0) return CableOutcome.Failure(CableError.INVALID_KHA_VALUE)
-      if (tempCorrectionFactor == null || !tempCorrectionFactor.isFinite() || tempCorrectionFactor <= 0.0 || tempCorrectionFactor > 2.0 ||
-        groupCorrectionFactor == null || !groupCorrectionFactor.isFinite() || groupCorrectionFactor <= 0.0 || groupCorrectionFactor > 2.0
-      ) return CableOutcome.Failure(CableError.INVALID_CORRECTION_FACTOR)
-      val derated = userKhaTableA * tempCorrectionFactor * groupCorrectionFactor
-      KhaCheckResult(userKhaTableA, tempCorrectionFactor, groupCorrectionFactor, derated, loadCurrentA, loadCurrentA <= derated + 1e-9)
-    } else null
+    val khaChecked = khaTable != null
+    if (khaChecked && (tempCorrectionFactor == null || !tempCorrectionFactor.isFinite() || tempCorrectionFactor <= 0.0 || tempCorrectionFactor > 2.0 ||
+        groupCorrectionFactor == null || !groupCorrectionFactor.isFinite() || groupCorrectionFactor <= 0.0 || groupCorrectionFactor > 2.0)
+    ) return CableOutcome.Failure(CableError.INVALID_CORRECTION_FACTOR)
+    val kTotal = if (khaChecked) tempCorrectionFactor!! * groupCorrectionFactor!! else 1.0
 
     val rho = resistivityOhmMm2PerM(material, resistivityMethod)
     val options = STANDARD_SECTIONS_MM2.map { s ->
       val dV = voltageDropForSection(circuit, material, resistivityMethod, s, lengthM, loadCurrentA, pf)
       val pct = dV / voltageV * 100.0
-      SectionOption(s, rho * 1000.0 / s, dV, pct, (voltageV - dV).coerceAtLeast(0.0), maxDropLimitPercent - pct, pct <= maxDropLimitPercent + 1e-9)
+      val derated = khaTable?.ampsFor(s)?.let { it * kTotal }
+      SectionOption(
+        s, rho * 1000.0 / s, dV, pct, (voltageV - dV).coerceAtLeast(0.0), maxDropLimitPercent - pct, pct <= maxDropLimitPercent + 1e-9,
+        derated, derated?.let { it - loadCurrentA },
+      )
     }
-    val recIdx = options.indexOfFirst { it.withinLimit }
+    val recIdx = options.indexOfFirst { it.passes(khaChecked) }
     val recommended = options.getOrNull(recIdx)
     val smaller = if (recIdx < 0) options.last() else options.getOrNull(recIdx - 1)
     val larger = if (recIdx < 0) null else options.getOrNull(recIdx + 1)
     return CableOutcome.Success(
       CableSizingResult(
         circuit, material, resistivityMethod, rho, voltageV, lengthM, loadCurrentA, pf,
-        maxDropLimitPercent, recommended, smaller, larger, khaCheck,
+        maxDropLimitPercent, khaChecked, recommended, smaller, larger,
       ),
     )
   }

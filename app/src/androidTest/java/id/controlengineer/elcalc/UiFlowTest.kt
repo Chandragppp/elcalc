@@ -20,6 +20,8 @@ class UiFlowTest {
 
   @Before
   fun setUp() {
+    // Tabel KHA tersimpan di DataStore: kosongkan agar tiap tes mulai bersih
+    kotlinx.coroutines.runBlocking { KhaTableStore(rule.activity).clearAll() }
     launchProMode("off", tab = 0)
   }
 
@@ -85,6 +87,7 @@ class UiFlowTest {
     rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("6 mm²", substring = true)
     rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("5.22 %", substring = true)
     rule.onNodeWithTag("cable_opt_larger").performScrollTo().assertTextContains("2.88", substring = true)
+    rule.onNodeWithTag("cable_kha_warning").performScrollTo().assertIsDisplayed()
     shot("cable-recommendation")
 
     // DC kontrol 24 V, 2 A, 50 m: 4 mm² (4,69 %)
@@ -95,6 +98,37 @@ class UiFlowTest {
     rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("4 mm²", substring = true)
     rule.onNodeWithTag("cable_opt_rec").performScrollTo().assertTextContains("4.69 %", substring = true)
     shot("cable-dc-24v")
+  }
+
+  // 2b. Tabel KHA buatan pengguna: kabel 5 m 50 A naik dari 1,5 mm² (ΔV saja) ke 16 mm² (KHA 61 A)
+  @Test
+  fun cableKhaTableDrivesRecommendation() {
+    launchProMode("off", tab = 1)
+    click("chip:" + str(R.string.phase_1p))
+    type("cable_voltage_input", "220")
+    type("cable_length_input", "5")
+    type("cable_load_input", "50")
+    type("cable_cosphi_input", "0.9")
+    type("cable_limit_input", "4")
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("1.5 mm²", substring = true)
+    rule.onNodeWithTag("cable_kha_warning").performScrollTo().assertIsDisplayed()
+
+    click("btn_kha_new")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("kha_dialog").fetchSemanticsNodes().isNotEmpty() }
+    type("kha_name_input", "A1 PVC 2c")
+    type("kha_field_10", "46")
+    type("kha_field_16", "61")
+    type("kha_field_25", "80")
+    shot("kha-table-editor")
+    rule.onNodeWithTag("btn_kha_save").performClick()
+    rule.waitUntil(5_000) {
+      rule.onAllNodesWithTag("cable_kha_warning").fetchSemanticsNodes().isEmpty()
+    }
+
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("16 mm²", substring = true)
+    rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("46.0 A", substring = true)
+    rule.onNodeWithTag("cable_opt_rec").performScrollTo().assertTextContains("11.0 A", substring = true)
+    shot("cable-kha-16mm")
   }
 
   // 3. Tab Motor terkunci saat pro=off dan membuka paywall

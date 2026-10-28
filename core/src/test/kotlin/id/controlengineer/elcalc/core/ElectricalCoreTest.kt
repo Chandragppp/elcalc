@@ -54,11 +54,12 @@ class ElectricalCoreTest {
     // Hitungan tangan 3F (IEC 60364-5-52 Annex G): V=400 V, Cu (rho=0.0225), X=0.00008 Ohm/m, L=80 m, I=50 A, cosPhi=0.85 (sin=0.526783), batas 3 %
     // dV(S) = sqrt(3)*50*80*(0.0225/S*0.85 + 0.00008*0.526783)
     // 10 mm2: 13.542161 V = 3.385540 % (kurang 0.385540 %); 16 mm2: 8.573341 V = 2.143335 % (sisa 0.856665 %); 25 mm2: 5.592048 V = 1.398012 % (sisa 1.601988 %)
-    // Rekomendasi 16 mm2; KHA = 70*0.9*0.85 = 53.55 A >= 50 A.
+    // Rekomendasi 16 mm2 (tanpa tabel KHA).
     val r3 = (CableCalculator.calculate(
       CableCircuit.THREE_PHASE, ConductorMaterial.COPPER, ResistivityMethod.IEC_60364_ANNEX_G,
-      80.0, 400.0, CableLoadInputMode.CURRENT_AMPS, 50.0, 0.85, 3.0, 70.0, false, 0.90, 0.85,
+      80.0, 400.0, CableLoadInputMode.CURRENT_AMPS, 50.0, 0.85, 3.0,
     ) as CableOutcome.Success).result
+    assertFalse(r3.khaChecked)
     assertEquals(16.0, r3.recommended!!.sectionMm2)
     assertEquals(1.40625, r3.recommended!!.resistancePerKmOhm, 1e-6)
     assertEquals(8.573341, r3.recommended!!.voltageDropV, 1e-5)
@@ -69,8 +70,6 @@ class ElectricalCoreTest {
     assertFalse(r3.smaller!!.withinLimit)
     assertEquals(25.0, r3.larger!!.sectionMm2)
     assertEquals(1.601988, r3.larger!!.marginPercent, 1e-5)
-    assertEquals(53.55, r3.khaCheck!!.deratedKhaA, 1e-6)
-    assertTrue(r3.khaCheck!!.passed)
 
     // Hitungan tangan DC kontrol: 24 V, 2 A, 50 m, Cu, batas 5 % (1.2 V); dV = 2*2*50*0.0225/S = 4.5/S V; cos φ diabaikan
     // 2.5 mm2: 1.8 V = 7.5 % (kurang 2.5 %); 4 mm2: 1.125 V = 4.6875 % (sisa 0.3125 %); 6 mm2: 0.75 V = 3.125 % (sisa 1.875 %)
@@ -82,13 +81,62 @@ class ElectricalCoreTest {
     assertEquals(0.3125, dc.recommended!!.marginPercent, 1e-9)
     assertEquals(-2.5, dc.smaller!!.marginPercent, 1e-9)
     assertEquals(1.875, dc.larger!!.marginPercent, 1e-9)
-    assertNull(dc.khaCheck)
+    assertFalse(dc.khaChecked)
 
     // Beban 400 A, 500 m, 3F 400 V, batas 5 %: 300 mm2 pun 9.17 % -> tidak ada rekomendasi, pembanding = 300 mm2
     val big = (CableCalculator.calculate(CableCircuit.THREE_PHASE, lengthM = 500.0, voltageV = 400.0, loadValue = 400.0, cosPhi = 0.85, maxDropLimitPercent = 5.0) as CableOutcome.Success).result
     assertNull(big.recommended)
     assertEquals(300.0, big.smaller!!.sectionMm2)
     assertEquals(9.1706, big.smaller!!.voltageDropPercent, 1e-4)
+  }
+
+  // 3b. Tabel KHA pengguna: kabel pendek arus besar ditentukan KHA, bukan dV
+  @Test
+  fun cableKhaTableDrivesRecommendationForShortRun() {
+    // Kasus dari pemilik (dibandingkan dengan app lain): 1F 220 V, 50 A, cos φ 0,9 (sin 0.435890), 5 m, batas 4 %, Cu.
+    // dV(S) = 2*50*5*(0.0225/S*0.9 + 0.00008*0.435890); 1.5 mm2: 6.767436 V = 3.076107 % (lolos dV); 16 mm2: 0.650248 V = 0.295567 %.
+    // Tabel KHA uji (diketik pengguna; nilai yang sama tampil di app pembanding: 16 mm2 = 61 A): 10 -> 46 A, 16 -> 61 A, 25 -> 80 A.
+    // Tanpa tabel: 1.5 mm2. Dengan tabel (k = 1): 10 mm2 kurang 4 A, 16 mm2 sisa 11 A -> rekomendasi 16 mm2; 25 mm2 sisa 30 A.
+    val noTable = (CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 50.0, cosPhi = 0.9, maxDropLimitPercent = 4.0,
+    ) as CableOutcome.Success).result
+    assertEquals(1.5, noTable.recommended!!.sectionMm2)
+    assertEquals(3.076107, noTable.recommended!!.voltageDropPercent, 1e-5)
+
+    val table = KhaTable("A1 PVC 2c", mapOf(1.5 to 14.5, 2.5 to 19.5, 4.0 to 26.0, 6.0 to 34.0, 10.0 to 46.0, 16.0 to 61.0, 25.0 to 80.0))
+    val r = (CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 50.0, cosPhi = 0.9, maxDropLimitPercent = 4.0, khaTable = table,
+    ) as CableOutcome.Success).result
+    assertTrue(r.khaChecked)
+    assertEquals(16.0, r.recommended!!.sectionMm2)
+    assertEquals(0.295567, r.recommended!!.voltageDropPercent, 1e-5)
+    assertEquals(11.0, r.recommended!!.khaMarginA!!, 1e-9)
+    assertEquals(10.0, r.smaller!!.sectionMm2)
+    assertEquals(-4.0, r.smaller!!.khaMarginA!!, 1e-9)
+    assertEquals(false, r.smaller!!.khaOk)
+    assertEquals(30.0, r.larger!!.khaMarginA!!, 1e-9)
+
+    // Faktor koreksi: 61*0.87*0.8 = 42.456 A < 50 -> 16 mm2 gagal, 25 mm2 = 80*0.696 = 55.68 A lolos
+    val derated = (CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 50.0, cosPhi = 0.9, maxDropLimitPercent = 4.0,
+      khaTable = table, tempCorrectionFactor = 0.87, groupCorrectionFactor = 0.8,
+    ) as CableOutcome.Success).result
+    assertEquals(25.0, derated.recommended!!.sectionMm2)
+    assertEquals(55.68, derated.recommended!!.deratedKhaA!!, 1e-9)
+
+    // Ukuran > 25 tidak ada di tabel -> 200 A tidak punya rekomendasi
+    val none = (CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 200.0, cosPhi = 0.9, maxDropLimitPercent = 4.0, khaTable = table,
+    ) as CableOutcome.Success).result
+    assertNull(none.recommended)
+
+    // Simpan/baca tabel
+    val decoded = KhaTableCodec.decode(KhaTableCodec.encode(listOf(table, KhaTable("C|tray", mapOf(2.5 to 27.0)))))
+    assertEquals(listOf(table, KhaTable("C tray", mapOf(2.5 to 27.0))), decoded)
+    assertEquals(emptyList(), KhaTableCodec.decode(null))
+    assertEquals(CableOutcome.Failure(CableError.INVALID_CORRECTION_FACTOR), CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 50.0, cosPhi = 0.9, maxDropLimitPercent = 4.0, khaTable = table, tempCorrectionFactor = 0.0,
+    ))
   }
 
   // 4. Kapasitor Bank: P = 100 kW, cos φ awal = 0,70 ke target = 0,95
@@ -161,7 +209,6 @@ class ElectricalCoreTest {
     assertEquals(MotorOutcome.Failure(MotorError.INVALID_EFFICIENCY), MotorCalculator.calculate(7.5, MotorPowerUnit.KW, 400.0, 0.85, 0.0))
     assertEquals(MotorOutcome.Failure(MotorError.INVALID_EFFICIENCY), MotorCalculator.calculate(7.5, MotorPowerUnit.KW, 400.0, 0.85, 1.05))
     assertEquals(CableOutcome.Failure(CableError.INVALID_LENGTH), CableCalculator.calculate(CableCircuit.THREE_PHASE, lengthM = 0.0, voltageV = 400.0, loadValue = 50.0, cosPhi = 0.85, maxDropLimitPercent = 5.0))
-    assertEquals(CableOutcome.Failure(CableError.INVALID_KHA_VALUE), CableCalculator.calculate(CableCircuit.THREE_PHASE, lengthM = 50.0, voltageV = 400.0, loadValue = 50.0, cosPhi = 0.85, maxDropLimitPercent = 5.0, userKhaTableA = -10.0, userKhaTextBlank = false))
     assertEquals(CapacitorBankOutcome.Failure(CapacitorBankError.TARGET_NOT_GREATER_THAN_INITIAL), CapacitorBankCalculator.calculate(100.0, 400.0, 0.90, 0.85))
     assertEquals(CapacitorBankOutcome.Failure(CapacitorBankError.INVALID_INITIAL_COS_PHI), CapacitorBankCalculator.calculate(100.0, 400.0, 1.0, 0.95))
     assertEquals(PhaseUnbalanceOutcome.Failure(PhaseUnbalanceError.INVALID_OR_NON_POSITIVE_VALUES), PhaseUnbalanceCalculator.calculate(UnbalanceQuantity.VOLTAGE, 400.0, 0.0, 400.0))
