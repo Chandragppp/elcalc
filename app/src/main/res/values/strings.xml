@@ -81,14 +81,13 @@
 <string name="trafo_out_isec">Secondary In2</string>
 <string name="trafo_out_isc">Fault current Isc</string>
 <string name="trafo_formula_note" formatted="false">In = S×1000 / (√3·V); Isc = In2 / (Uk/100) assuming infinite MV bus.</string>
-<string name="cable_title">Cable Voltage Drop &amp; Minimum Size</string>
-<string name="cable_hint">Select phase, material, section (mm²), one-way length (m), and load to compute ΔV and minimum standard section.</string>
+<string name="cable_title">Cable Size Recommendation (Voltage Drop)</string>
+<string name="cable_hint">Enter voltage, load, one-way cable length and ΔV limit. The app recommends the smallest standard section and compares it with one size smaller and larger.</string>
 <string name="cable_material_cu">Copper (Cu)</string>
 <string name="cable_material_al">Aluminium (Al)</string>
 <string name="cable_rho_method_label">Resistivity reference</string>
 <string name="cable_rho_iec">IEC 60364-5-52 Annex G (Cu 0.0225, Al 0.036)</string>
 <string name="cable_rho_guide">Installation Guide (Cu 0.0237, Al 0.0376)</string>
-<string name="cable_section_label">Cross-section S (mm²)</string>
 <string name="cable_length_label">Cable length (m)</string>
 <string name="cable_load_mode_amps">Load current (A)</string>
 <string name="cable_load_mode_kw">Load power (kW)</string>
@@ -97,21 +96,16 @@
 <string name="cable_limit_lighting" formatted="false">3% Lighting</string>
 <string name="cable_limit_other" formatted="false">5% Other</string>
 <string name="cable_out_dv_pct" formatted="false">Voltage drop ΔV (%)</string>
-<string name="cable_out_v_end">Voltage at load</string>
-<string name="cable_status_ok" formatted="false">OK (≤ %1$s%% limit)</string>
-<string name="cable_status_exceed" formatted="false">EXCEEDS LIMIT (&gt; %1$s%%)</string>
-<string name="cable_out_min_section">Min section for ΔV ≤ limit</string>
-<string name="cable_min_section_exceeds_300">&gt; 300 mm² (parallel)</string>
 <string name="cable_kha_title">Optional Ampacity (KHA) Check</string>
 <string name="cable_kha_hint">Enter KHA from your own table; checks I_load ≤ KHA × k_t × k_g without copying copyrighted tables.</string>
-<string name="cable_kha_input_label">KHA from your table (A) — optional</string>
+<string name="cable_kha_input_label">KHA of recommended size from your table (A), optional</string>
 <string name="cable_k_temp_label">Temp factor k_t</string>
 <string name="cable_k_group_label">Group factor k_g</string>
 <string name="cable_kha_ok">OK (I_load ≤ Effective KHA)</string>
 <string name="cable_kha_overload">OVERLOAD (I_load &gt; Effective KHA)</string>
 <string name="cable_local_types_title">Indonesian Cable Types (Reference)</string>
 <string name="cable_types_body">• NYA: Single-core Cu PVC wire for fixed indoor conduit.\n• NYM: Multicore Cu white PVC cable for indoor walls/trays.\n• NYY: Multicore Cu black PVC cable for indoor/outdoor/duct.\n• NYFGbY: Steel-armoured Cu PVC cable for direct burial.\n• NYAF: Flexible fine-stranded Cu PVC wire for panel wiring.</string>
-<string name="cable_source_note" formatted="false">1P ΔV = 2·I·L·(R cos φ + X sin φ), 3P ΔV = √3·I·L·(R cos φ + X sin φ), X = 0.08 Ω/km. Default 3%/5% limits &amp; IEC 60364-5-52 Annex G ρ: PERLU CEK MANUAL against SNI 0225:2020.</string>
+<string name="cable_source_note" formatted="false">DC &amp; 1P ΔV = 2·I·L·(R cos φ + X sin φ) (DC: cos φ = 1), 3P ΔV = √3·I·L·(R cos φ + X sin φ), X = 0.08 Ω/km. Default 3%/5% limits &amp; IEC 60364-5-52 Annex G ρ: PERLU CEK MANUAL against SNI 0225:2020.</string>
 <string name="motor_title">3-Phase Motor &amp; Starter Sizer (DOL / Star-Delta)</string>
 <string name="motor_hint">Enter motor power (kW or HP; 1 HP = 745.7 W), V, cos φ, η (0..1), and method to size AC-3 contactors, TOR, and breaker.</string>
 <string name="motor_power_kw_label">Motor power P (kW)</string>
@@ -158,4 +152,12 @@
 <string name="unb_status_i_ok" formatted="false">Normal current unbalance (≤ 10.0%)</string>
 <string name="unb_status_i_warn" formatted="false">HIGH current unbalance (&gt; 10.0%)</string>
 <string name="unb_derating_note" formatted="false">NEMA MG 1 / US DOE Tip Sheet #7: Voltage unbalance &gt; 1% requires motor derating (&gt; 5% not recommended); extra temp rise ≈ 2×(%Unbalance)² %. Curve Fig. 20-2: PERLU CEK MANUAL.</string>
+<string name="cable_circuit_dc">DC (control)</string>
+<string name="cable_rec_title">Recommended section</string>
+<string name="cable_compare_title">Size comparison</string>
+<string name="cable_tag_rec">recommended</string>
+<string name="cable_margin_left">%1$s%% left</string>
+<string name="cable_margin_over">%1$s%% short (over limit)</string>
+<string name="cable_none_fits">Even 300 mm² exceeds the limit: use parallel cables, a higher voltage, or a shorter run.</string>
+<string name="cable_rec_note">Based on voltage drop only. Also check ampacity (KHA) and protection for the chosen size.</string>
 </resources>

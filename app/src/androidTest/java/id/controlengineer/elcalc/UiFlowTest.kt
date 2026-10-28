@@ -81,9 +81,20 @@ class UiFlowTest {
     type("cable_cosphi_input", "0.85")
     type("cable_limit_input", "5")
 
-    value(str(R.string.cable_out_dv_pct)).assertTextContains("1.34 %", substring = true)
-    rule.onNodeWithTag("cable_status_text").performScrollTo().assertTextContains("OK", substring = true)
-    shot("cable-voltage-drop")
+    // 3F 400 V, 50 A, 50 m, cos φ 0,85, batas 5 %: 4 mm² = 5,22 % (kurang 0,22), 6 mm² = 3,50 %, 10 mm² = 2,12 % (sisa 2,88)
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("6 mm²", substring = true)
+    rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("5.22 %", substring = true)
+    rule.onNodeWithTag("cable_opt_larger").performScrollTo().assertTextContains("2.88", substring = true)
+    shot("cable-recommendation")
+
+    // DC kontrol 24 V, 2 A, 50 m: 4 mm² (4,69 %)
+    click("chip:" + str(R.string.cable_circuit_dc))
+    type("cable_voltage_input", "24")
+    type("cable_load_input", "2")
+    rule.onNodeWithTag("cable_cosphi_input").assertDoesNotExist()
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("4 mm²", substring = true)
+    rule.onNodeWithTag("cable_opt_rec").performScrollTo().assertTextContains("4.69 %", substring = true)
+    shot("cable-dc-24v")
   }
 
   // 3. Tab Motor terkunci saat pro=off dan membuka paywall
