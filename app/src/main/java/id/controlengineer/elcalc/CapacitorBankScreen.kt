@@ -71,6 +71,16 @@ fun CapacitorBankScreen() {
             appendLine("\n$disclaimer")
           }
           OutlinedButton({ sharePlainText(context, shareSummary) }, Modifier.fillMaxWidth().testTag("cap_share_btn")) { Text(s(R.string.share)) }
+          ReportActionButtons(
+            isPro = true,
+            onUnlockPro = {},
+            onGenerate = { ctx, fmt, meta ->
+              when (fmt) {
+                ReportFormat.PDF -> ReportExporter.generateCapacitorPdf(ctx, r, meta)
+                ReportFormat.XLSX -> ReportExporter.generateCapacitorXlsx(ctx, r, meta)
+              }
+            },
+          )
         }
       }
     }

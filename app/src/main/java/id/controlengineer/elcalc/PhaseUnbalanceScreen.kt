@@ -66,6 +66,16 @@ fun PhaseUnbalanceScreen() {
             appendLine("Status: $statusText\n\n$disclaimer")
           }
           OutlinedButton({ sharePlainText(context, shareSummary) }, Modifier.fillMaxWidth().testTag("unb_share_btn")) { Text(s(R.string.share)) }
+          ReportActionButtons(
+            isPro = true,
+            onUnlockPro = {},
+            onGenerate = { ctx, fmt, meta ->
+              when (fmt) {
+                ReportFormat.PDF -> ReportExporter.generateUnbalancePdf(ctx, r, meta)
+                ReportFormat.XLSX -> ReportExporter.generateUnbalanceXlsx(ctx, r, meta)
+              }
+            },
+          )
         }
       }
     }

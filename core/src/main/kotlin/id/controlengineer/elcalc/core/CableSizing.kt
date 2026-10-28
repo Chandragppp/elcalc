@@ -80,6 +80,8 @@ data class CableSizingResult(
   val smaller: SectionOption?,
   /** Satu ukuran di atas rekomendasi. */
   val larger: SectionOption?,
+  /** Seluruh opsi penampang standar (untuk tabel Perbandingan di laporan Excel). */
+  val allOptions: List<SectionOption> = emptyList(),
 )
 
 sealed class CableOutcome {
@@ -155,7 +157,7 @@ object CableCalculator {
     return CableOutcome.Success(
       CableSizingResult(
         circuit, material, resistivityMethod, rho, voltageV, lengthM, loadCurrentA, pf,
-        maxDropLimitPercent, khaChecked, recommended, smaller, larger,
+        maxDropLimitPercent, khaChecked, recommended, smaller, larger, options,
       ),
     )
   }

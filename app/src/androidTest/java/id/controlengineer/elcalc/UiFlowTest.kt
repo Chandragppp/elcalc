@@ -200,4 +200,129 @@ class UiFlowTest {
     rule.onNodeWithTag("about_disclaimer_text").assertTextContains("SNI 0225:2020 (PUIL 2020) / IEC 60364", substring = true)
     shot("about-disclaimer")
   }
+
+  // 7. pro=off di tab Kabel: tombol laporan PDF/Excel tetap tampil dan membuka paywall saat diklik
+  @Test
+  fun cableReportButtonsOpenPaywallWhenProOff() {
+    launchProMode("off", tab = 1)
+    click("btn_report_pdf")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("paywall_sheet").fetchSemanticsNodes().isNotEmpty() }
+    rule.onNodeWithTag("paywall_sheet").assertIsDisplayed()
+    shot("cable-report-paywall")
+    click("paywall_close")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("paywall_sheet").fetchSemanticsNodes().isEmpty() }
+
+    click("btn_report_xlsx")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("paywall_sheet").fetchSemanticsNodes().isNotEmpty() }
+    rule.onNodeWithTag("paywall_sheet").assertIsDisplayed()
+  }
+
+  // 8. pro=on di tab Kabel (3F 400 V 50 A 50 m): dialog kop laporan tampil & ekspor PDF + XLSX valid
+  @Test
+  fun cable3Phase400V50A50mGeneratesPdfAndXlsxReports() {
+    launchProMode("on", tab = 1)
+    type("cable_length_input", "50")
+    type("cable_voltage_input", "400")
+    type("cable_load_input", "50")
+    type("cable_cosphi_input", "0.85")
+    type("cable_limit_input", "5")
+
+    click("btn_report_pdf")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("report_header_dialog").fetchSemanticsNodes().isNotEmpty() }
+    rule.onNodeWithTag("report_header_dialog").assertIsDisplayed()
+    type("report_circuit_input", "Panel LP-2 ke MCC")
+    type("report_author_input", "Budi Santoso")
+    type("report_company_input", "PT Kontrol Nusantara")
+    type("report_location_input", "Gardu Induk A")
+    type("report_notes_input", "Jalur tray utama")
+    shot("report-header-dialog")
+    rule.onNodeWithTag("btn_report_cancel").performClick()
+
+    // Panggil langsung fungsi pembuat laporan PDF & XLSX untuk menghindari chooser sistem Android
+    val ctx = rule.activity
+    val kha = id.controlengineer.elcalc.core.IecKha.table(
+      id.controlengineer.elcalc.core.ConductorMaterial.COPPER,
+      id.controlengineer.elcalc.core.CableInsulation.PVC,
+      3,
+      id.controlengineer.elcalc.core.IecMethod.B1,
+    )
+    val calc = id.controlengineer.elcalc.core.CableCalculator.calculate(
+      circuit = id.controlengineer.elcalc.core.CableCircuit.THREE_PHASE,
+      material = id.controlengineer.elcalc.core.ConductorMaterial.COPPER,
+      resistivityMethod = id.controlengineer.elcalc.core.ResistivityMethod.IEC_60364_ANNEX_G,
+      lengthM = 50.0,
+      voltageV = 400.0,
+      loadInputMode = id.controlengineer.elcalc.core.CableLoadInputMode.CURRENT_AMPS,
+      loadValue = 50.0,
+      cosPhi = 0.85,
+      maxDropLimitPercent = 5.0,
+      khaTable = kha,
+      tempCorrectionFactor = 1.0,
+      groupCorrectionFactor = 1.0,
+    ) as id.controlengineer.elcalc.core.CableOutcome.Success
+
+    val meta = ReportMeta(
+      circuitName = "Panel LP-2 ke MCC",
+      author = "Budi Santoso",
+      company = "PT Kontrol Nusantara",
+      location = "Gardu Induk A",
+      notes = "Jalur tray utama",
+    )
+    val reportInput = CableReportInput(
+      circuit = id.controlengineer.elcalc.core.CableCircuit.THREE_PHASE,
+      material = id.controlengineer.elcalc.core.ConductorMaterial.COPPER,
+      rhoMethod = id.controlengineer.elcalc.core.ResistivityMethod.IEC_60364_ANNEX_G,
+      voltageV = 400.0,
+      lengthM = 50.0,
+      loadMode = id.controlengineer.elcalc.core.CableLoadInputMode.CURRENT_AMPS,
+      loadValue = 50.0,
+      cosPhi = 0.85,
+      maxDropPercent = 5.0,
+      useIecTable = true,
+      userTableName = null,
+      insulation = id.controlengineer.elcalc.core.CableInsulation.PVC,
+      loadedConductors = 3,
+      iecMethod = id.controlengineer.elcalc.core.IecMethod.B1,
+      autoFactors = true,
+      ambientTempC = 30.0,
+      circuitCount = 1,
+      groupingArrangementLabel = ctx.getString(R.string.cable_group_1),
+      kTemp = 1.0,
+      kGroup = 1.0,
+      result = calc.result,
+    )
+
+    val pdfFile = ReportExporter.generateCablePdf(ctx, reportInput, meta)
+    org.junit.Assert.assertTrue(pdfFile.exists() && pdfFile.length() > 0L)
+
+    // Buka dengan PdfRenderer, pastikan pageCount >= 1, dan render halaman 1 ke filesDir/shots/report-pdf-page1.png
+    android.os.ParcelFileDescriptor.open(pdfFile, android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
+      android.graphics.pdf.PdfRenderer(pfd).use { renderer ->
+        org.junit.Assert.assertTrue(renderer.pageCount >= 1)
+        renderer.openPage(0).use { page ->
+          val bmp = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)
+          bmp.eraseColor(android.graphics.Color.WHITE)
+          page.render(bmp, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+          val shotsDir = File(ctx.filesDir, "shots").apply { mkdirs() }
+          File(shotsDir, "report-pdf-page1.png").outputStream().use { out ->
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+          }
+        }
+      }
+    }
+
+    val xlsxFile = ReportExporter.generateCableXlsx(ctx, reportInput, meta)
+    org.junit.Assert.assertTrue(xlsxFile.exists() && xlsxFile.length() > 0L)
+    val zipEntries = mutableSetOf<String>()
+    java.util.zip.ZipInputStream(xlsxFile.inputStream()).use { zis ->
+      var e = zis.nextEntry
+      while (e != null) {
+        zipEntries.add(e.name)
+        e = zis.nextEntry
+      }
+    }
+    org.junit.Assert.assertTrue(zipEntries.contains("xl/workbook.xml"))
+    org.junit.Assert.assertTrue(zipEntries.contains("xl/worksheets/sheet1.xml"))
+    org.junit.Assert.assertTrue(zipEntries.contains("xl/worksheets/sheet2.xml"))
+  }
 }

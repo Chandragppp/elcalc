@@ -262,4 +262,102 @@ class ElectricalCoreTest {
     assertTrue(ProEntitlement.isTrialExpired(start, end))
     assertEquals(start + ProEntitlement.REWARD_DURATION_MS, ProEntitlement.clampRewardedUntil(start + 7 * ProEntitlement.DAY_MS, start))
   }
+
+  // 10. CableSizingResult menyimpan daftar semua penampang standar (allOptions) untuk sheet Perbandingan
+  @Test
+  fun cableSizingResultAllOptionsContainsAllStandardSections() {
+    val kha = IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 3, IecMethod.B1)
+    val outcome = CableCalculator.calculate(
+      circuit = CableCircuit.THREE_PHASE,
+      material = ConductorMaterial.COPPER,
+      resistivityMethod = ResistivityMethod.IEC_60364_ANNEX_G,
+      lengthM = 50.0,
+      voltageV = 400.0,
+      loadInputMode = CableLoadInputMode.CURRENT_AMPS,
+      loadValue = 50.0,
+      cosPhi = 0.85,
+      maxDropLimitPercent = 5.0,
+      khaTable = kha,
+      tempCorrectionFactor = 1.0,
+      groupCorrectionFactor = 1.0,
+    )
+    assertTrue(outcome is CableOutcome.Success)
+    val r = (outcome as CableOutcome.Success).result
+    assertEquals(CableCalculator.STANDARD_SECTIONS_MM2.size, r.allOptions.size)
+    assertEquals(0.5, r.allOptions.first().sectionMm2, 1e-6)
+    assertEquals(300.0, r.allOptions.last().sectionMm2, 1e-6)
+    val opt10 = r.allOptions.first { it.sectionMm2 == 10.0 }
+    assertEquals(r.recommended?.sectionMm2, opt10.sectionMm2)
+    assertEquals(50.0, opt10.deratedKhaA!!, 1e-6)
+  }
+
+  // 11. XlsxWriter menghasilkan struktur ZIP OOXML yang valid, lolos XML parser, escaping karakter khusus, dan multi-sheet
+  @Test
+  fun xlsxWriterProducesValidOoxmlZipWithMultipleSheetsAndEscaping() {
+    val sheet1 = XlsxSheet(
+      name = "Ringkasan Kabel",
+      rows = listOf(
+        listOf("Laporan Perhitungan Ukuran Kabel & ΔV"),
+        listOf("Nama Sirkit / Beban", "Panel <LP-2> & \"MCC\" 'A'"),
+        listOf(null, ""),
+        listOf("Penampang (mm²)", "ΔV (%)", "KHA (A)", "Status"),
+        listOf(10.0, 2.12, 50.0, "OK"),
+        listOf(16.0, 1.33, 68.0, "OK & Aman"),
+      ),
+      boldRows = setOf(0, 3),
+      colWidths = listOf(22.0, 14.0, 14.0, 18.0),
+    )
+    val sheet2 = XlsxSheet(
+      name = "Perbandingan",
+      rows = listOf(
+        listOf("Penampang (mm²)", "R (Ω/km)", "ΔV (V)", "ΔV (%)"),
+        listOf(1.5, 15.0, 55.2, 13.8),
+        listOf(2.5, 9.0, 33.1, 8.28),
+      ),
+      boldRows = setOf(0),
+    )
+
+    val baos = java.io.ByteArrayOutputStream()
+    XlsxWriter.write(baos, listOf(sheet1, sheet2))
+    val bytes = baos.toByteArray()
+    assertTrue(bytes.isNotEmpty())
+
+    val entries = mutableMapOf<String, String>()
+    java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(bytes)).use { zis ->
+      var entry = zis.nextEntry
+      while (entry != null) {
+        entries[entry.name] = zis.readBytes().toString(Charsets.UTF_8)
+        entry = zis.nextEntry
+      }
+    }
+
+    assertTrue(entries.containsKey("[Content_Types].xml"))
+    assertTrue(entries.containsKey("_rels/.rels"))
+    assertTrue(entries.containsKey("xl/workbook.xml"))
+    assertTrue(entries.containsKey("xl/_rels/workbook.xml.rels"))
+    assertTrue(entries.containsKey("xl/styles.xml"))
+    assertTrue(entries.containsKey("xl/worksheets/sheet1.xml"))
+    assertTrue(entries.containsKey("xl/worksheets/sheet2.xml"))
+
+    // Semua entri XML harus lolos parser XML standar tanpa error
+    val dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+    for ((name, xml) in entries) {
+      val doc = dbf.newDocumentBuilder().parse(org.xml.sax.InputSource(java.io.StringReader(xml)))
+      assertNotNull(doc.documentElement, "Dokumen XML $name gagal di-parse")
+    }
+
+    val wbXml = entries.getValue("xl/workbook.xml")
+    assertTrue(wbXml.contains("name=\"Ringkasan Kabel\""))
+    assertTrue(wbXml.contains("name=\"Perbandingan\""))
+
+    val s1Xml = entries.getValue("xl/worksheets/sheet1.xml")
+    // Karakter khusus XML harus ter-escape
+    assertTrue(s1Xml.contains("Panel &lt;LP-2&gt; &amp; &quot;MCC&quot; &apos;A&apos;"))
+    // Angka ditulis sebagai nilai numerik <v>, bukan inlineStr
+    assertTrue(s1Xml.contains("<c r=\"A5\"><v>10</v></c>"))
+    assertTrue(s1Xml.contains("<c r=\"B5\"><v>2.12</v></c>"))
+    assertTrue(s1Xml.contains("<c r=\"C5\"><v>50</v></c>"))
+    // Baris header memakai style bold s="1"
+    assertTrue(s1Xml.contains("<c r=\"A4\" s=\"1\" t=\"inlineStr\">"))
+  }
 }

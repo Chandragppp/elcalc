@@ -19,7 +19,7 @@ import id.controlengineer.elcalc.core.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun CableScreen() {
+fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
   var circuit by rememberSaveable { mutableStateOf(CableCircuit.THREE_PHASE) }
   var material by rememberSaveable { mutableStateOf(ConductorMaterial.COPPER) }
   var rhoMethod by rememberSaveable { mutableStateOf(ResistivityMethod.IEC_60364_ANNEX_G) }
@@ -187,6 +187,39 @@ fun CableScreen() {
           rec?.let { SectionOptionRow(it, true, r.khaChecked, "cable_opt_rec") }
           r.larger?.let { SectionOptionRow(it, false, r.khaChecked, "cable_opt_larger") }
           Text(s(R.string.cable_rec_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          val reportInput = CableReportInput(
+            circuit = circuit,
+            material = material,
+            rhoMethod = rhoMethod,
+            voltageV = parseDecimal(voltageText) ?: 0.0,
+            lengthM = parseDecimal(lengthText) ?: 0.0,
+            loadMode = loadMode,
+            loadValue = parseDecimal(loadText) ?: 0.0,
+            cosPhi = parseDecimal(cosPhiText) ?: 1.0,
+            maxDropPercent = parseDecimal(limitText) ?: 5.0,
+            useIecTable = useIec,
+            userTableName = userTable?.name,
+            insulation = insulation,
+            loadedConductors = loaded,
+            iecMethod = iecMethod,
+            autoFactors = autoFactors,
+            ambientTempC = parseDecimal(ambientText),
+            circuitCount = parseDecimal(circuitsText)?.toInt(),
+            groupingArrangementLabel = groupLabels.getOrElse(arrangement - 1) { "" },
+            kTemp = kTemp,
+            kGroup = kGroup,
+            result = r,
+          )
+          ReportActionButtons(
+            isPro = isPro,
+            onUnlockPro = onUnlockPro,
+            onGenerate = { ctx, fmt, meta ->
+              when (fmt) {
+                ReportFormat.PDF -> ReportExporter.generateCablePdf(ctx, reportInput, meta)
+                ReportFormat.XLSX -> ReportExporter.generateCableXlsx(ctx, reportInput, meta)
+              }
+            },
+          )
         }
       }
     }

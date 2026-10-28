@@ -178,7 +178,7 @@ fun ElCalcApp(repo: ProRepository, initialTab: Int = 0, initialSubtab: Int = 0, 
     Box(Modifier.fillMaxSize().padding(innerPadding)) {
       when (Tab.entries[tab]) {
         Tab.BASIC -> BasicScreen(initialSubTab = if (tab == initialTab) initialSubtab else 0)
-        Tab.CABLE -> CableScreen()
+        Tab.CABLE -> CableScreen(isPro = isPro, onUnlockPro = unlockAction)
         Tab.MOTOR -> if (isPro) MotorScreen(initialSubtab = if (tab == initialTab) initialSubtab else 0) else LockedProTabScreen(R.string.motor_title, unlockAction)
         Tab.CAP_BANK -> if (isPro) CapacitorBankScreen() else LockedProTabScreen(R.string.cap_title, unlockAction)
         Tab.UNBALANCE -> if (isPro) PhaseUnbalanceScreen() else LockedProTabScreen(R.string.unb_title, unlockAction)

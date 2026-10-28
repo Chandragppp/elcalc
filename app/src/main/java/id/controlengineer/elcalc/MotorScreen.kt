@@ -85,6 +85,16 @@ fun MotorScreen(initialSubtab: Int = 0) {
             appendLine("TOR: ${fixed(r.torSettingCurrentA, 2)} A | Breaker: ${fixed(r.breakerMinRangeA, 2)}..${fixed(r.breakerMaxRangeA, 2)} A\n$disclaimer")
           }
           OutlinedButton({ sharePlainText(context, shareSummary) }, Modifier.fillMaxWidth().testTag("motor_share_btn")) { Text(s(R.string.share)) }
+          ReportActionButtons(
+            isPro = true,
+            onUnlockPro = {},
+            onGenerate = { ctx, fmt, meta ->
+              when (fmt) {
+                ReportFormat.PDF -> ReportExporter.generateMotorPdf(ctx, r, meta)
+                ReportFormat.XLSX -> ReportExporter.generateMotorXlsx(ctx, r, meta)
+              }
+            },
+          )
         }
       }
     }
