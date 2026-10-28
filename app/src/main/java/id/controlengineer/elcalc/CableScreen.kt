@@ -220,7 +220,7 @@ private fun KhaTableEditorDialog(
         CableCalculator.STANDARD_SECTIONS_MM2.chunked(2).forEach { pair ->
           TwoCol {
             pair.forEach { sec ->
-              DecimalField(values[sec] ?: "", { values[sec] = it }, "${fmt(sec, 2)} mm² (A)", Modifier.weight(1f).testTag("kha_field_${fmt(sec, 2)}"))
+              DecimalField(values[sec] ?: "", { values[sec] = it }, "${fmt(sec, 2)} mm²", Modifier.weight(1f).testTag("kha_field_${fmt(sec, 2)}"))
             }
             if (pair.size == 1) Column(Modifier.weight(1f)) {}
           }

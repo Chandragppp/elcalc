@@ -14,10 +14,10 @@
 <string name="subtab_ohm">Ohm &amp; Power</string>
 <string name="subtab_ac_power">1P / 3P Power</string>
 <string name="subtab_trafo">Transformer</string>
-<string name="independent_disclaimer" formatted="false">Independent estimation tool. Verify final designs against SNI 0225:2020 (PUIL 2020) / IEC 60364 and manufacturer data. (Alat bantu estimasi independen. Verifikasi desain akhir dengan SNI 0225:2020 (PUIL 2020) / IEC 60364 dan data pabrikan.)</string>
+<string name="independent_disclaimer" formatted="false">Independent estimation tool. Verify final designs against SNI 0225:2020 (PUIL 2020) / IEC 60364 and manufacturer data.</string>
 <string name="about_title">About Panel Calc</string>
 <string name="about_version">Version %1$s</string>
-<string name="about_body">Offline industrial electrical &amp; panel calculator by ControlEngineerID. Pay once, no subscription (Bayar sekali, tanpa langganan).</string>
+<string name="about_body">Offline industrial electrical &amp; panel calculator by ControlEngineerID. Pay once, no subscription.</string>
 <string name="pro_unlock">Unlock Pro</string>
 <string name="pro_lifetime">Pro (lifetime)</string>
 <string name="pro_active_until">Pro until %1$s</string>
@@ -28,7 +28,7 @@
 <string name="paywall_trial_ended">Trial ended</string>
 <string name="privacy_options">Privacy options</string>
 <string name="paywall_title">Panel Calc Pro</string>
-<string name="paywall_one_time_badge">Pay once, no subscription (Bayar sekali, tanpa langganan)</string>
+<string name="paywall_one_time_badge">Pay once, no subscription</string>
 <string name="paywall_subtitle">Basic &amp; Cable stay free offline. Unlock all industrial panel calculators:</string>
 <string name="paywall_features" formatted="false">• 3-Phase Motor Sizer (DOL &amp; Star-Delta: Main/Delta 58% In, Star 33% In, TOR &amp; breaker)\n• Capacitor Bank (kVAR) Sizer, ΔI, and 5/6/8 steps\n• 3-Phase Voltage &amp; Current Unbalance (NEMA MG 1)\n• One-tap plain-text report sharing</string>
 <string name="paywall_reward_disclosure">Watch 1 video ad to unlock Pro for 24 hours (stays active offline).</string>

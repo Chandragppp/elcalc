@@ -13,10 +13,10 @@
 <string name="subtab_ohm">Ohm &amp; Daya</string>
 <string name="subtab_ac_power">Daya 1F / 3F</string>
 <string name="subtab_trafo">Trafo</string>
-<string name="independent_disclaimer" formatted="false">Alat bantu estimasi independen. Verifikasi desain akhir dengan SNI 0225:2020 (PUIL 2020) / IEC 60364 dan data pabrikan. (Independent estimation tool. Verify final designs against SNI 0225:2020 (PUIL 2020) / IEC 60364 and manufacturer data.)</string>
+<string name="independent_disclaimer" formatted="false">Alat bantu estimasi independen. Verifikasi desain akhir dengan SNI 0225:2020 (PUIL 2020) / IEC 60364 dan data pabrikan.</string>
 <string name="about_title">Tentang Panel Calc</string>
 <string name="about_version">Versi %1$s</string>
-<string name="about_body">Kalkulator kelistrikan industri &amp; panel offline oleh ControlEngineerID. Bayar sekali, tanpa langganan (Pay once, no subscription).</string>
+<string name="about_body">Kalkulator kelistrikan industri &amp; panel offline oleh ControlEngineerID. Bayar sekali, tanpa langganan.</string>
 <string name="pro_unlock">Buka Pro</string>
 <string name="pro_lifetime">Pro (seumur hidup)</string>
 <string name="pro_active_until">Pro aktif s/d %1$s</string>
@@ -27,7 +27,7 @@
 <string name="paywall_trial_ended">Trial berakhir</string>
 <string name="privacy_options">Pilihan privasi</string>
 <string name="paywall_title">Panel Calc Pro</string>
-<string name="paywall_one_time_badge">Bayar sekali, tanpa langganan (Pay once, no subscription)</string>
+<string name="paywall_one_time_badge">Bayar sekali, tanpa langganan</string>
 <string name="paywall_subtitle">Dasar &amp; Kabel tetap gratis offline. Buka seluruh kalkulator panel industri:</string>
 <string name="paywall_features" formatted="false">• Starter Motor 3 Fasa (DOL &amp; Star-Delta: Main/Delta 58% In, Star 33% In, TOR &amp; pengaman)\n• Kapasitor Bank (kVAR), penurunan arus ΔI, &amp; saran 5/6/8 step\n• Ketidakseimbangan 3 Fasa (NEMA MG 1) &amp; panduan derating\n• Bagikan ringkasan hasil teks rapi</string>
 <string name="paywall_reward_disclosure">Tonton 1 iklan video untuk membuka fitur Pro 24 jam (tetap aktif offline).</string>
