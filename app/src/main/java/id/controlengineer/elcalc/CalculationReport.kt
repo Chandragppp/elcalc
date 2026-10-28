@@ -262,7 +262,7 @@ object ReportExporter {
 
   private fun headerPairs(context: Context, meta: ReportMeta, dateStr: String): List<Pair<String, String>> = buildList {
     add(context.getString(R.string.report_label_date) to dateStr)
-    if (meta.circuitName.isNotBlank()) add(context.getString(R.string.report_field_circuit) to meta.circuitName)
+    if (meta.circuitName.isNotBlank()) add(context.getString(R.string.report_field_circuit).substringBefore(" (") to meta.circuitName)
     if (meta.author.isNotBlank()) add(context.getString(R.string.report_field_author) to meta.author)
     if (meta.company.isNotBlank()) add(context.getString(R.string.report_field_company) to meta.company)
     if (meta.location.isNotBlank()) add(context.getString(R.string.report_field_location) to meta.location)
