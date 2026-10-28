@@ -95,8 +95,8 @@
 <string name="cable_limit_lighting" formatted="false">3% Penerangan</string>
 <string name="cable_limit_other" formatted="false">5% Lainnya</string>
 <string name="cable_out_dv_pct" formatted="false">Susut tegangan ΔV (%)</string>
-<string name="cable_kha_title">Tabel KHA (kuat hantar arus)</string>
-<string name="cable_kha_hint">Pilih atau buat tabel KHA Anda (nilai diketik dari tabel resmi PUIL/IEC sesuai cara pemasangan). Rekomendasi harus lolos ΔV dan KHA × k_t × k_g.</string>
+<string name="cable_kha_title">Kuat hantar arus (KHA)</string>
+<string name="cable_kha_hint">Memakai tabel bawaan IEC 60364-5-52, atau tabel Anda sendiri yang diketik dari dokumen resmi. Rekomendasi harus lolos ΔV dan KHA × k_t × k_g.</string>
 <string name="cable_k_temp_label">Faktor suhu k_t</string>
 <string name="cable_k_group_label">Faktor grup k_g</string>
 <string name="cable_local_types_title">Referensi Singkat Jenis Kabel Lokal</string>
@@ -156,7 +156,6 @@
 <string name="cable_margin_over">kurang %1$s%% (melebihi batas)</string>
 <string name="cable_none_fits">Tidak ada ukuran yang lolos: tambah ukuran lebih besar di tabel KHA, pakai kabel paralel, tegangan lebih tinggi, atau jalur lebih pendek.</string>
 <string name="cable_rec_note">Cek juga rating proteksi (MCB/MCCB) dan ketahanan hubung singkat untuk ukuran yang dipilih.</string>
-<string name="cable_kha_none">Tanpa tabel</string>
 <string name="cable_kha_new">Tabel baru</string>
 <string name="cable_kha_edit">Ubah tabel</string>
 <string name="cable_rec_title_dv_only">Minimum menurut ΔV saja</string>
@@ -170,4 +169,24 @@
 <string name="cable_kha_save">Simpan</string>
 <string name="cable_kha_delete">Hapus</string>
 <string name="cable_kha_cancel">Batal</string>
+<string name="cable_kha_iec">IEC 60364-5-52 (bawaan)</string>
+<string name="cable_insul_pvc">PVC (70 °C)</string>
+<string name="cable_insul_xlpe">XLPE/EPR (90 °C)</string>
+<string name="cable_loaded_label">Konduktor berbeban</string>
+<string name="cable_loaded_2">2 (DC / 1 fasa)</string>
+<string name="cable_loaded_3">3 (3 fasa)</string>
+<string name="cable_method_label">Cara pemasangan</string>
+<string name="cable_method_hint">A1/A2: dalam pipa di dinding berinsulasi termal (inti tunggal / multi-inti). B1/B2: dalam pipa pada dinding. C: diklem langsung di dinding atau tray tidak berlubang. D1: dalam pipa di tanah. D2: ditanam langsung. E: kabel multi-inti di tray berlubang/tangga di udara bebas. F: inti tunggal bersentuhan di tray (trefoil atau datar). G: inti tunggal berjarak di udara bebas.</string>
+<string name="cable_ambient_label">Suhu udara (°C)</string>
+<string name="cable_circuits_label">Jumlah sirkit digabung</string>
+<string name="cable_group_label">Susunan pengelompokan</string>
+<string name="cable_group_1">Digabung / tertutup</string>
+<string name="cable_group_2">Satu lapis di dinding</string>
+<string name="cable_group_3">Di bawah plafon</string>
+<string name="cable_group_4">Tray berlubang</string>
+<string name="cable_group_5">Tangga / klem</string>
+<string name="cable_factors_value">k_t = %1$s · k_g = %2$s</string>
+<string name="cable_temp_too_high">Suhu melebihi batas isolasi untuk tabel ini.</string>
+<string name="cable_ground_note">Metode D (di tanah) memakai acuan tanah 20 °C: isi faktor suhu tanah dan pengelompokan secara manual.</string>
+<string name="cable_iec_note">Nilai bawaan: IEC 60364-5-52 Lampiran B (udara 30 °C, tanah 20 °C), dicocokkan per sel dengan GOST R 50571.5.52-2011 (identik IEC). Verifikasi dengan dokumen resmi untuk desain akhir.</string>
 </resources>

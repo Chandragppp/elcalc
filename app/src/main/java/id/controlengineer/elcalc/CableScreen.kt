@@ -38,21 +38,38 @@ fun CableScreen() {
   val scope = rememberCoroutineScope()
   val tables by store.tables.collectAsState(initial = emptyList())
   val selectedName by store.selectedName.collectAsState(initial = null)
-  val khaTable = tables.firstOrNull { it.name == selectedName }
   // null = dialog tertutup; "" = tabel baru; selain itu = ubah tabel bernama itu
   var editing by rememberSaveable { mutableStateOf<String?>(null) }
+
+  // Tabel bawaan IEC 60364-5-52 (dipakai bila tidak ada tabel milik pengguna yang dipilih)
+  var insulation by rememberSaveable { mutableStateOf(CableInsulation.PVC) }
+  var loaded by rememberSaveable { mutableIntStateOf(3) }
+  var method by rememberSaveable { mutableStateOf(IecMethod.B1) }
+  var ambientText by rememberSaveable { mutableStateOf("30") }
+  var circuitsText by rememberSaveable { mutableStateOf("1") }
+  var arrangement by rememberSaveable { mutableIntStateOf(IecMethod.B1.defaultGroupingArrangement) }
+  val userTable = tables.firstOrNull { it.name == selectedName }
+  val useIec = userTable == null
+  // F flat / G hanya untuk 3 konduktor; bila pindah ke 2 konduktor pakai F
+  val iecMethod = if (method in IecKha.methodsFor(loaded)) method else IecMethod.F
+  val khaTable = if (useIec) IecKha.table(material, insulation, loaded, iecMethod) else userTable
+  // Faktor koreksi: IEC (bukan metode tanah) dihitung dari B.52.14/B.52.17; selain itu diisi manual
+  val autoFactors = useIec && !iecMethod.inGround
+  val kTemp = if (autoFactors) parseDecimal(ambientText)?.let { IecKha.ambientFactor(insulation, it) } else parseDecimal(kTempText)
+  val kGroup = if (autoFactors) parseDecimal(circuitsText)?.toInt()?.let { IecKha.groupingFactor(arrangement, it) } else parseDecimal(kGroupText)
 
   val isDc = circuit == CableCircuit.DC
   val outcome = CableCalculator.calculate(
     circuit, material, rhoMethod, parseDecimal(lengthText), parseDecimal(voltageText),
     loadMode, parseDecimal(loadText), parseDecimal(cosPhiText), parseDecimal(limitText),
-    khaTable, parseDecimal(kTempText), parseDecimal(kGroupText),
+    khaTable, kTemp, kGroup,
   )
   val cDc = s(R.string.cable_circuit_dc); val p1 = s(R.string.phase_1p); val p3 = s(R.string.phase_3p)
   val mCu = s(R.string.cable_material_cu); val mAl = s(R.string.cable_material_al)
   val rIec = s(R.string.cable_rho_iec); val rGuide = s(R.string.cable_rho_guide)
   val lAmps = s(R.string.cable_load_mode_amps); val lKw = s(R.string.cable_load_mode_kw)
-  val noTable = s(R.string.cable_kha_none)
+  val iecLabel = s(R.string.cable_kha_iec)
+  val groupLabels = listOf(R.string.cable_group_1, R.string.cable_group_2, R.string.cable_group_3, R.string.cable_group_4, R.string.cable_group_5).map { s(it) }
   fun isErr(e: CableError) = outcome is CableOutcome.Failure && outcome.error == e
 
   ScreenColumn {
@@ -62,6 +79,8 @@ fun CableScreen() {
     // Jenis rangkaian: DC kontrol panel, 1 fasa, 3 fasa
     ChipRow(CableCircuit.entries, circuit, { when (it) { CableCircuit.DC -> cDc; CableCircuit.SINGLE_PHASE -> p1; else -> p3 } }) {
       circuit = it
+      // DC & 1 fasa: 2 konduktor berbeban; 3 fasa: 3
+      loaded = if (it == CableCircuit.THREE_PHASE) 3 else 2
       voltageText = when (it) { CableCircuit.DC -> "24"; CableCircuit.SINGLE_PHASE -> "230"; else -> "400" }
     }
     val presets = when (circuit) {
@@ -91,21 +110,43 @@ fun CableScreen() {
     Text(s(R.string.cable_rho_method_label), style = MaterialTheme.typography.labelLarge)
     ChipRow(ResistivityMethod.entries, rhoMethod, { if (it == ResistivityMethod.IEC_60364_ANNEX_G) rIec else rGuide }) { rhoMethod = it }
 
-    // Pilih / buat tabel KHA
+    // Sumber KHA: tabel bawaan IEC atau tabel milik pengguna
     ResultCard {
       Text(s(R.string.cable_kha_title), style = MaterialTheme.typography.titleSmall)
       Text(s(R.string.cable_kha_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-      ChipRow(listOf<String?>(null) + tables.map { it.name }, khaTable?.name, { it ?: noTable }) { name -> scope.launch { store.select(name) } }
-      TwoCol {
-        OutlinedButton({ editing = "" }, Modifier.testTag("btn_kha_new")) { Text(s(R.string.cable_kha_new)) }
-        if (khaTable != null) OutlinedButton({ editing = khaTable.name }, Modifier.testTag("btn_kha_edit")) { Text(s(R.string.cable_kha_edit)) }
+      ChipRow(listOf<String?>(null) + tables.map { it.name }, userTable?.name, { it ?: iecLabel }) { name -> scope.launch { store.select(name) } }
+      if (useIec) {
+        ChipRow(CableInsulation.entries, insulation, { if (it == CableInsulation.PVC) s(R.string.cable_insul_pvc) else s(R.string.cable_insul_xlpe) }) { insulation = it }
+        Text(s(R.string.cable_loaded_label), style = MaterialTheme.typography.labelLarge)
+        ChipRow(listOf(2, 3), loaded, { if (it == 2) s(R.string.cable_loaded_2) else s(R.string.cable_loaded_3) }) { loaded = it }
+        Text(s(R.string.cable_method_label), style = MaterialTheme.typography.labelLarge)
+        ChipRow(IecKha.methodsFor(loaded), iecMethod, { it.code }) { method = it; arrangement = it.defaultGroupingArrangement }
+        Text(s(R.string.cable_method_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
       }
-      if (khaTable != null) {
+      if (autoFactors) {
+        TwoCol {
+          DecimalField(ambientText, { ambientText = it }, R.string.cable_ambient_label, "cable_ambient_input", kTemp == null, Modifier.weight(1f))
+          DecimalField(circuitsText, { circuitsText = it }, R.string.cable_circuits_label, "cable_circuits_input", kGroup == null, Modifier.weight(1f))
+        }
+        Text(s(R.string.cable_group_label), style = MaterialTheme.typography.labelLarge)
+        ChipRow((1..5).toList(), arrangement, { groupLabels[it - 1] }) { arrangement = it }
+        Text(
+          stringResource(R.string.cable_factors_value, kTemp?.let { fmt(it, 2) } ?: "-", kGroup?.let { fmt(it, 2) } ?: "-"),
+          fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("cable_factors_text"),
+        )
+        if (kTemp == null) Text(s(R.string.cable_temp_too_high), color = MaterialTheme.colorScheme.error)
+      } else {
+        if (useIec) Text(s(R.string.cable_ground_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TwoCol {
           val factorErr = isErr(CableError.INVALID_CORRECTION_FACTOR)
           DecimalField(kTempText, { kTempText = it }, R.string.cable_k_temp_label, "cable_k_temp_input", factorErr, Modifier.weight(1f))
           DecimalField(kGroupText, { kGroupText = it }, R.string.cable_k_group_label, "cable_k_group_input", factorErr, Modifier.weight(1f))
         }
+      }
+      if (useIec) Text(s(R.string.cable_iec_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      TwoCol {
+        OutlinedButton({ editing = "" }, Modifier.testTag("btn_kha_new")) { Text(s(R.string.cable_kha_new)) }
+        if (userTable != null) OutlinedButton({ editing = userTable.name }, Modifier.testTag("btn_kha_edit")) { Text(s(R.string.cable_kha_edit)) }
       }
     }
 

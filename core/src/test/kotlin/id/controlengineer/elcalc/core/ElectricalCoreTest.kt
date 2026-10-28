@@ -139,6 +139,40 @@ class ElectricalCoreTest {
     ))
   }
 
+  // 3c. Tabel KHA bawaan IEC 60364-5-52 (nilai dicek per sel terhadap GOST R 50571.5.52-2011 = IEC 60364-5-52:2009)
+  @Test
+  fun builtinIecKhaTablesAndFactors() {
+    // B.52.2 Cu A1: 16 mm2 = 61 A (sama dengan app pembanding); kasus pemilik 1F 220 V 50 A 5 m -> 16 mm2
+    val a1 = IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 2, IecMethod.A1)!!
+    assertEquals(61.0, a1.ampsFor(16.0))
+    val r = (CableCalculator.calculate(
+      CableCircuit.SINGLE_PHASE, lengthM = 5.0, voltageV = 220.0, loadValue = 50.0, cosPhi = 0.9, maxDropLimitPercent = 4.0, khaTable = a1,
+    ) as CableOutcome.Success).result
+    assertEquals(16.0, r.recommended!!.sectionMm2)
+    // B.52.4 Cu B1 (3 konduktor): 6 mm2 = 36 A, 10 mm2 = 50 A; B.52.10 Cu E 3 konduktor 16 mm2 = 80 A; B.52.13 Al G vert 300 mm2 = 652 A
+    val b1 = IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 3, IecMethod.B1)!!
+    assertEquals(36.0, b1.ampsFor(6.0)); assertEquals(50.0, b1.ampsFor(10.0))
+    assertEquals(80.0, IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 3, IecMethod.E)!!.ampsFor(16.0))
+    assertEquals(652.0, IecKha.table(ConductorMaterial.ALUMINIUM, CableInsulation.XLPE, 3, IecMethod.G_VERT)!!.ampsFor(300.0))
+    // Sel beda antar-sumber memakai nilai lebih rendah: B.52.3 Cu 50 mm2 A1 = 156 A (bukan 158)
+    assertEquals(156.0, IecKha.table(ConductorMaterial.COPPER, CableInsulation.XLPE, 2, IecMethod.A1)!!.ampsFor(50.0))
+    // Kombinasi yang tidak ada di standar
+    assertNull(IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 2, IecMethod.G_HORIZ))
+    assertNull(IecKha.table(ConductorMaterial.COPPER, CableInsulation.PVC, 2, IecMethod.A1)!!.ampsFor(0.75))
+
+    // B.52.14: PVC 40 °C = 0.87; 37 °C dibulatkan ke atas (40 °C) = 0.87; PVC 65 °C tidak diizinkan; XLPE 65 °C = 0.65
+    assertEquals(0.87, IecKha.ambientFactor(CableInsulation.PVC, 40.0))
+    assertEquals(0.87, IecKha.ambientFactor(CableInsulation.PVC, 37.0))
+    assertNull(IecKha.ambientFactor(CableInsulation.PVC, 65.0))
+    assertEquals(0.65, IecKha.ambientFactor(CableInsulation.XLPE, 65.0))
+    // B.52.17: susunan 1, 3 sirkit = 0.70; 10 sirkit -> kolom 12 = 0.45; >20 = 0.38; susunan 2, 12 sirkit = kolom 9 = 0.70
+    assertEquals(0.70, IecKha.groupingFactor(1, 3))
+    assertEquals(0.45, IecKha.groupingFactor(1, 10))
+    assertEquals(0.38, IecKha.groupingFactor(1, 25))
+    assertEquals(0.70, IecKha.groupingFactor(2, 12))
+    assertNull(IecKha.groupingFactor(6, 1))
+  }
+
   // 4. Kapasitor Bank: P = 100 kW, cos φ awal = 0,70 ke target = 0,95
   @Test
   fun capacitorBank100kWFrom0_70To0_95() {

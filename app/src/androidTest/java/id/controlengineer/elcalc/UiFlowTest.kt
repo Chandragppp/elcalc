@@ -83,11 +83,12 @@ class UiFlowTest {
     type("cable_cosphi_input", "0.85")
     type("cable_limit_input", "5")
 
-    // 3F 400 V, 50 A, 50 m, cos φ 0,85, batas 5 %: 4 mm² = 5,22 % (kurang 0,22), 6 mm² = 3,50 %, 10 mm² = 2,12 % (sisa 2,88)
-    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("6 mm²", substring = true)
-    rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("5.22 %", substring = true)
-    rule.onNodeWithTag("cable_opt_larger").performScrollTo().assertTextContains("2.88", substring = true)
-    rule.onNodeWithTag("cable_kha_warning").performScrollTo().assertIsDisplayed()
+    // Default tabel bawaan IEC B.52.4 Cu PVC B1 (3 konduktor, 30 °C, 1 sirkit): 6 mm² = 36 A (kurang 14 A), 10 mm² = 50 A (pas),
+    // 16 mm² = 68 A. ΔV 10 mm² = 2,12 % -> rekomendasi 10 mm² (ΔV saja akan memberi 6 mm²)
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("10 mm²", substring = true)
+    rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("36.0 A", substring = true)
+    rule.onNodeWithTag("cable_opt_larger").performScrollTo().assertTextContains("68.0 A", substring = true)
+    rule.onNodeWithTag("cable_kha_warning").assertDoesNotExist()
     shot("cable-recommendation")
 
     // DC kontrol 24 V, 2 A, 50 m: 4 mm² (4,69 %)
@@ -110,25 +111,32 @@ class UiFlowTest {
     type("cable_load_input", "50")
     type("cable_cosphi_input", "0.9")
     type("cable_limit_input", "4")
-    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("1.5 mm²", substring = true)
-    rule.onNodeWithTag("cable_kha_warning").performScrollTo().assertIsDisplayed()
-
-    click("btn_kha_new")
-    rule.waitUntil(5_000) { rule.onAllNodesWithTag("kha_dialog").fetchSemanticsNodes().isNotEmpty() }
-    type("kha_name_input", "A1 PVC 2c")
-    type("kha_field_10", "46")
-    type("kha_field_16", "61")
-    type("kha_field_25", "80")
-    shot("kha-table-editor")
-    rule.onNodeWithTag("btn_kha_save").performClick()
-    rule.waitUntil(5_000) {
-      rule.onAllNodesWithTag("cable_kha_warning").fetchSemanticsNodes().isEmpty()
-    }
-
+    // IEC B.52.2 Cu PVC B1 (2 konduktor): 6 mm² = 41 A, 10 mm² = 57 A -> 10 mm²
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("10 mm²", substring = true)
+    // A1 (sama dengan app pembanding): 10 mm² = 46 A kurang 4 A, 16 mm² = 61 A sisa 11 A
+    click("chip:A1")
     rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("16 mm²", substring = true)
     rule.onNodeWithTag("cable_opt_smaller").performScrollTo().assertTextContains("46.0 A", substring = true)
     rule.onNodeWithTag("cable_opt_rec").performScrollTo().assertTextContains("11.0 A", substring = true)
     shot("cable-kha-16mm")
+    // 40 °C (k_t 0,87) & 2 sirkit digabung (k_g 0,80): 16 mm² = 42,46 A gagal, 25 mm² = 80 × 0,696 = 55,68 A -> 25 mm²
+    type("cable_ambient_input", "40")
+    type("cable_circuits_input", "2")
+    rule.onNodeWithTag("cable_factors_text").performScrollTo().assertTextContains("k_t = 0.87 · k_g = 0.8", substring = true)
+    rule.onNodeWithTag("cable_rec_text").performScrollTo().assertTextContains("25 mm²", substring = true)
+
+    // Tabel milik pengguna menggantikan tabel bawaan
+    click("btn_kha_new")
+    rule.waitUntil(5_000) { rule.onAllNodesWithTag("kha_dialog").fetchSemanticsNodes().isNotEmpty() }
+    type("kha_name_input", "Tabel saya")
+    type("kha_field_10", "55")
+    type("kha_field_16", "75")
+    shot("kha-table-editor")
+    rule.onNodeWithTag("btn_kha_save").performClick()
+    rule.waitUntil(5_000) {
+      rule.onAllNodes(hasTestTag("cable_rec_text") and hasText("10 mm²", substring = true)).fetchSemanticsNodes().isNotEmpty()
+    }
+    rule.onNodeWithTag("cable_opt_rec").performScrollTo().assertTextContains("55.0 A", substring = true)
   }
 
   // 3. Tab Motor terkunci saat pro=off dan membuka paywall

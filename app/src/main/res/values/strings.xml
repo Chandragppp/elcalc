@@ -96,8 +96,8 @@
 <string name="cable_limit_lighting" formatted="false">3% Lighting</string>
 <string name="cable_limit_other" formatted="false">5% Other</string>
 <string name="cable_out_dv_pct" formatted="false">Voltage drop ΔV (%)</string>
-<string name="cable_kha_title">Ampacity (KHA) table</string>
-<string name="cable_kha_hint">Select or create your KHA table (values typed from the official PUIL/IEC table for your installation method). The recommendation must pass both ΔV and KHA × k_t × k_g.</string>
+<string name="cable_kha_title">Ampacity (KHA)</string>
+<string name="cable_kha_hint">Uses the built-in IEC 60364-5-52 table, or your own table typed from the official document. The recommendation must pass both ΔV and KHA × k_t × k_g.</string>
 <string name="cable_k_temp_label">Temp factor k_t</string>
 <string name="cable_k_group_label">Group factor k_g</string>
 <string name="cable_local_types_title">Indonesian Cable Types (Reference)</string>
@@ -157,7 +157,6 @@
 <string name="cable_margin_over">%1$s%% short (over limit)</string>
 <string name="cable_none_fits">No size passes: add larger sizes to the KHA table, use parallel cables, a higher voltage, or a shorter run.</string>
 <string name="cable_rec_note">Also check protection (breaker rating) and short-circuit withstand for the chosen size.</string>
-<string name="cable_kha_none">No table</string>
 <string name="cable_kha_new">New table</string>
 <string name="cable_kha_edit">Edit table</string>
 <string name="cable_rec_title_dv_only">Minimum by ΔV only</string>
@@ -171,4 +170,24 @@
 <string name="cable_kha_save">Save</string>
 <string name="cable_kha_delete">Delete</string>
 <string name="cable_kha_cancel">Cancel</string>
+<string name="cable_kha_iec">IEC 60364-5-52 (built-in)</string>
+<string name="cable_insul_pvc">PVC (70 °C)</string>
+<string name="cable_insul_xlpe">XLPE/EPR (90 °C)</string>
+<string name="cable_loaded_label">Loaded conductors</string>
+<string name="cable_loaded_2">2 (DC / 1-phase)</string>
+<string name="cable_loaded_3">3 (3-phase)</string>
+<string name="cable_method_label">Installation method</string>
+<string name="cable_method_hint">A1/A2: in conduit in a thermally insulated wall (single-core / multicore). B1/B2: in conduit on a wall. C: clipped direct on a wall or unperforated tray. D1: in duct in ground. D2: direct in ground. E: multicore on perforated tray/ladder in free air. F: single-core touching on tray (trefoil or flat). G: single-core spaced in free air.</string>
+<string name="cable_ambient_label">Ambient air (°C)</string>
+<string name="cable_circuits_label">Circuits grouped</string>
+<string name="cable_group_label">Grouping arrangement</string>
+<string name="cable_group_1">Bunched / enclosed</string>
+<string name="cable_group_2">Single layer on wall</string>
+<string name="cable_group_3">Under ceiling</string>
+<string name="cable_group_4">Perforated tray</string>
+<string name="cable_group_5">Ladder / cleats</string>
+<string name="cable_factors_value">k_t = %1$s · k_g = %2$s</string>
+<string name="cable_temp_too_high">Temperature above the insulation limit for this table.</string>
+<string name="cable_ground_note">Method D (in ground) uses 20 °C ground reference: enter ground temperature and grouping factors manually.</string>
+<string name="cable_iec_note">Built-in values: IEC 60364-5-52 Annex B (air 30 °C, ground 20 °C), cross-checked cell by cell against GOST R 50571.5.52-2011 (identical to IEC). Verify against the official document for final design.</string>
 </resources>
