@@ -142,7 +142,7 @@ class UiFlowTest {
     click("btn_unlock_pro")
     rule.waitUntil(5_000) { rule.onAllNodesWithTag("paywall_sheet").fetchSemanticsNodes().isNotEmpty() }
     rule.onNodeWithTag("paywall_sheet").assertIsDisplayed()
-    rule.onNodeWithTag("paywall_one_time_text").assertTextContains("Bayar sekali", substring = true)
+    rule.onNodeWithTag("paywall_one_time_text").assertTextContains(str(R.string.paywall_one_time_badge), substring = true)
     rule.onNodeWithTag("btn_buy_pro").assertIsDisplayed()
     rule.onNodeWithTag("btn_watch_ad").performScrollTo().assertIsDisplayed()
     shot("motor-paywall")
