@@ -75,9 +75,8 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
   fun isErr(e: CableError) = outcome is CableOutcome.Failure && outcome.error == e
 
   ScreenColumn {
-    Text(s(R.string.cable_title), style = MaterialTheme.typography.titleMedium)
-    Text(s(R.string.cable_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
+    // Urutan: input yang sering diganti → hasil ukuran kabel → parameter lanjutan (nilai bawaan) di bawah,
+    // agar mengganti input dan melihat hasil tidak perlu scroll jauh.
     // Jenis rangkaian: DC kontrol panel, 1 fasa, 3 fasa
     ChipRow(CableCircuit.entries, circuit, { when (it) { CableCircuit.DC -> cDc; CableCircuit.SINGLE_PHASE -> p1; else -> p3 } }) {
       circuit = it
@@ -96,17 +95,96 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
       DecimalField(voltageText, { voltageText = it }, R.string.acp_voltage_label, "cable_voltage_input", isErr(CableError.INVALID_VOLTAGE), Modifier.weight(1f))
       DecimalField(lengthText, { lengthText = it }, R.string.cable_length_label, "cable_length_input", isErr(CableError.INVALID_LENGTH), Modifier.weight(1f))
     }
-    ChipRow(CableLoadInputMode.entries, loadMode, { if (it == CableLoadInputMode.CURRENT_AMPS) lAmps else lKw }) { loadMode = it }
     TwoCol {
       val lRes = if (loadMode == CableLoadInputMode.CURRENT_AMPS) R.string.cable_load_amps_label else R.string.acp_mode_kw
       DecimalField(loadText, { loadText = it }, lRes, "cable_load_input", isErr(CableError.INVALID_LOAD), Modifier.weight(1f))
+      Column(Modifier.weight(1f)) {
+        ChipRow(CableLoadInputMode.entries, loadMode, { if (it == CableLoadInputMode.CURRENT_AMPS) lAmps else lKw }) { loadMode = it }
+      }
+    }
+
+    ResultCard {
+      when (outcome) {
+        is CableOutcome.Failure -> {
+          val msg = when (outcome.error) {
+            CableError.INVALID_COS_PHI -> s(R.string.err_cosphi)
+            CableError.INVALID_LIMIT_PERCENT -> s(R.string.err_percent)
+            CableError.INVALID_CORRECTION_FACTOR -> s(R.string.err_factor)
+            else -> s(R.string.err_positive)
+          }
+          Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("cable_error"))
+        }
+        is CableOutcome.Success -> {
+          val r = outcome.result
+          Text(s(if (r.khaChecked) R.string.cable_rec_title else R.string.cable_rec_title_dv_only), style = MaterialTheme.typography.titleSmall)
+          val rec = r.recommended
+          if (rec != null) {
+            Text(
+              "${fmt(rec.sectionMm2, 2)} mm²",
+              style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
+              color = if (r.khaChecked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+              modifier = Modifier.testTag("cable_rec_text"),
+            )
+          } else {
+            Text(s(R.string.cable_none_fits), color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("cable_rec_text"))
+          }
+          // Tanpa tabel KHA: hasil BELUM aman secara termal
+          if (!r.khaChecked) {
+            Text(s(R.string.cable_kha_warning), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("cable_kha_warning"))
+          }
+          ValueRow(R.string.cable_load_amps_label, "${fixed(r.loadCurrentA, 2)} A")
+          Text(s(R.string.cable_compare_title), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 6.dp))
+          r.smaller?.let { SectionOptionRow(it, false, r.khaChecked, "cable_opt_smaller") }
+          rec?.let { SectionOptionRow(it, true, r.khaChecked, "cable_opt_rec") }
+          r.larger?.let { SectionOptionRow(it, false, r.khaChecked, "cable_opt_larger") }
+          Text(s(R.string.cable_rec_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          val reportInput = CableReportInput(
+            circuit = circuit,
+            material = material,
+            rhoMethod = rhoMethod,
+            voltageV = parseDecimal(voltageText) ?: 0.0,
+            lengthM = parseDecimal(lengthText) ?: 0.0,
+            loadMode = loadMode,
+            loadValue = parseDecimal(loadText) ?: 0.0,
+            cosPhi = parseDecimal(cosPhiText) ?: 1.0,
+            maxDropPercent = parseDecimal(limitText) ?: 5.0,
+            useIecTable = useIec,
+            userTableName = userTable?.name,
+            insulation = insulation,
+            loadedConductors = loaded,
+            iecMethod = iecMethod,
+            autoFactors = autoFactors,
+            ambientTempC = parseDecimal(ambientText),
+            circuitCount = parseDecimal(circuitsText)?.toInt(),
+            groupingArrangementLabel = groupLabels.getOrElse(arrangement - 1) { "" },
+            kTemp = kTemp,
+            kGroup = kGroup,
+            result = r,
+          )
+          ReportActionButtons(
+            isPro = isPro,
+            onUnlockPro = onUnlockPro,
+            onGenerate = { ctx, fmt, meta ->
+              when (fmt) {
+                ReportFormat.PDF -> ReportExporter.generateCablePdf(ctx, reportInput, meta)
+                ReportFormat.XLSX -> ReportExporter.generateCableXlsx(ctx, reportInput, meta)
+              }
+            },
+          )
+        }
+      }
+    }
+
+    // Parameter lanjutan: sudah berisi nilai bawaan dan jarang diubah
+    Text(s(R.string.cable_advanced_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+    TwoCol {
       // DC tidak memakai cos φ
       if (!isDc) DecimalField(cosPhiText, { cosPhiText = it }, R.string.acp_cosphi_label, "cable_cosphi_input", isErr(CableError.INVALID_COS_PHI), Modifier.weight(1f))
+      DecimalField(limitText, { limitText = it }, R.string.cable_limit_label, "cable_limit_input", isErr(CableError.INVALID_LIMIT_PERCENT), Modifier.weight(1f))
     }
     TwoCol {
-      DecimalField(limitText, { limitText = it }, R.string.cable_limit_label, "cable_limit_input", isErr(CableError.INVALID_LIMIT_PERCENT), Modifier.weight(1f))
-      AssistChip({ limitText = "3" }, { Text(s(R.string.cable_limit_lighting)) }, Modifier.padding(top = 8.dp).testTag("cable_limit_3_chip"))
-      AssistChip({ limitText = "5" }, { Text(s(R.string.cable_limit_other)) }, Modifier.padding(top = 8.dp).testTag("cable_limit_5_chip"))
+      AssistChip({ limitText = "3" }, { Text(s(R.string.cable_limit_lighting)) }, Modifier.testTag("cable_limit_3_chip"))
+      AssistChip({ limitText = "5" }, { Text(s(R.string.cable_limit_other)) }, Modifier.testTag("cable_limit_5_chip"))
     }
     ChipRow(ConductorMaterial.entries, material, { if (it == ConductorMaterial.COPPER) mCu else mAl }) { material = it }
     Text(s(R.string.cable_rho_method_label), style = MaterialTheme.typography.labelLarge)
@@ -152,78 +230,9 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
       }
     }
 
-    ResultCard {
-      when (outcome) {
-        is CableOutcome.Failure -> {
-          val msg = when (outcome.error) {
-            CableError.INVALID_COS_PHI -> s(R.string.err_cosphi)
-            CableError.INVALID_LIMIT_PERCENT -> s(R.string.err_percent)
-            CableError.INVALID_CORRECTION_FACTOR -> s(R.string.err_factor)
-            else -> s(R.string.err_positive)
-          }
-          Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("cable_error"))
-        }
-        is CableOutcome.Success -> {
-          val r = outcome.result
-          ValueRow(R.string.cable_load_amps_label, "${fixed(r.loadCurrentA, 2)} A")
-          Text(s(if (r.khaChecked) R.string.cable_rec_title else R.string.cable_rec_title_dv_only), style = MaterialTheme.typography.titleSmall)
-          val rec = r.recommended
-          if (rec != null) {
-            Text(
-              "${fmt(rec.sectionMm2, 2)} mm²",
-              style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
-              color = if (r.khaChecked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-              modifier = Modifier.testTag("cable_rec_text"),
-            )
-          } else {
-            Text(s(R.string.cable_none_fits), color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("cable_rec_text"))
-          }
-          // Tanpa tabel KHA: hasil BELUM aman secara termal
-          if (!r.khaChecked) {
-            Text(s(R.string.cable_kha_warning), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("cable_kha_warning"))
-          }
-          Text(s(R.string.cable_compare_title), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 6.dp))
-          r.smaller?.let { SectionOptionRow(it, false, r.khaChecked, "cable_opt_smaller") }
-          rec?.let { SectionOptionRow(it, true, r.khaChecked, "cable_opt_rec") }
-          r.larger?.let { SectionOptionRow(it, false, r.khaChecked, "cable_opt_larger") }
-          Text(s(R.string.cable_rec_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-          val reportInput = CableReportInput(
-            circuit = circuit,
-            material = material,
-            rhoMethod = rhoMethod,
-            voltageV = parseDecimal(voltageText) ?: 0.0,
-            lengthM = parseDecimal(lengthText) ?: 0.0,
-            loadMode = loadMode,
-            loadValue = parseDecimal(loadText) ?: 0.0,
-            cosPhi = parseDecimal(cosPhiText) ?: 1.0,
-            maxDropPercent = parseDecimal(limitText) ?: 5.0,
-            useIecTable = useIec,
-            userTableName = userTable?.name,
-            insulation = insulation,
-            loadedConductors = loaded,
-            iecMethod = iecMethod,
-            autoFactors = autoFactors,
-            ambientTempC = parseDecimal(ambientText),
-            circuitCount = parseDecimal(circuitsText)?.toInt(),
-            groupingArrangementLabel = groupLabels.getOrElse(arrangement - 1) { "" },
-            kTemp = kTemp,
-            kGroup = kGroup,
-            result = r,
-          )
-          ReportActionButtons(
-            isPro = isPro,
-            onUnlockPro = onUnlockPro,
-            onGenerate = { ctx, fmt, meta ->
-              when (fmt) {
-                ReportFormat.PDF -> ReportExporter.generateCablePdf(ctx, reportInput, meta)
-                ReportFormat.XLSX -> ReportExporter.generateCableXlsx(ctx, reportInput, meta)
-              }
-            },
-          )
-        }
-      }
-    }
 
+    Text(s(R.string.cable_title), style = MaterialTheme.typography.titleSmall)
+    Text(s(R.string.cable_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     InfoCard {
       Text(s(R.string.cable_local_types_title), style = MaterialTheme.typography.titleSmall)
       Text(s(R.string.cable_types_body), style = MaterialTheme.typography.bodySmall)

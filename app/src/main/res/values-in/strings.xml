@@ -80,7 +80,8 @@
 <string name="trafo_out_isec">Arus sekunder In2</string>
 <string name="trafo_out_isc">Arus hubung singkat Isc</string>
 <string name="trafo_formula_note" formatted="false">In = S×1000 / (√3·V); Isc = In2 / (Uk/100) asumsi bus MV ideal.</string>
-<string name="cable_title">Rekomendasi Ukuran Kabel (Susut Tegangan)</string>
+<string name="cable_title">Ukuran Kabel</string>
+<string name="cable_advanced_title">Parameter lanjutan (nilai bawaan, jarang diubah)</string>
 <string name="cable_hint">Isi tegangan, beban, panjang kabel satu arah, dan batas ΔV. Aplikasi merekomendasikan penampang standar terkecil dan membandingkannya dengan satu ukuran lebih kecil dan lebih besar.</string>
 <string name="cable_material_cu">Tembaga (Cu)</string>
 <string name="cable_material_al">Aluminium (Al)</string>
@@ -88,8 +89,8 @@
 <string name="cable_rho_iec">IEC 60364-5-52 Lampiran G (Cu 0,0225; Al 0,036)</string>
 <string name="cable_rho_guide">Installation Guide (Cu 0,0237; Al 0,0376)</string>
 <string name="cable_length_label">Panjang kabel (m)</string>
-<string name="cable_load_mode_amps">Arus beban (A)</string>
-<string name="cable_load_mode_kw">Daya beban (kW)</string>
+<string name="cable_load_mode_amps">Arus (A)</string>
+<string name="cable_load_mode_kw">Daya (kW)</string>
 <string name="cable_load_amps_label">Arus beban I (A)</string>
 <string name="cable_limit_label" formatted="false">Batas ΔV maks (%)</string>
 <string name="cable_limit_lighting" formatted="false">3% Penerangan</string>

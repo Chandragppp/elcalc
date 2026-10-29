@@ -81,7 +81,8 @@
 <string name="trafo_out_isec">Secondary In2</string>
 <string name="trafo_out_isc">Fault current Isc</string>
 <string name="trafo_formula_note" formatted="false">In = S×1000 / (√3·V); Isc = In2 / (Uk/100) assuming infinite MV bus.</string>
-<string name="cable_title">Cable Size Recommendation (Voltage Drop)</string>
+<string name="cable_title">Cable Size</string>
+<string name="cable_advanced_title">Advanced parameters (defaults, rarely changed)</string>
 <string name="cable_hint">Enter voltage, load, one-way cable length and ΔV limit. The app recommends the smallest standard section and compares it with one size smaller and larger.</string>
 <string name="cable_material_cu">Copper (Cu)</string>
 <string name="cable_material_al">Aluminium (Al)</string>
@@ -89,8 +90,8 @@
 <string name="cable_rho_iec">IEC 60364-5-52 Annex G (Cu 0.0225, Al 0.036)</string>
 <string name="cable_rho_guide">Installation Guide (Cu 0.0237, Al 0.0376)</string>
 <string name="cable_length_label">Cable length (m)</string>
-<string name="cable_load_mode_amps">Load current (A)</string>
-<string name="cable_load_mode_kw">Load power (kW)</string>
+<string name="cable_load_mode_amps">Current (A)</string>
+<string name="cable_load_mode_kw">Power (kW)</string>
 <string name="cable_load_amps_label">Load current I (A)</string>
 <string name="cable_limit_label" formatted="false">Max ΔV limit (%)</string>
 <string name="cable_limit_lighting" formatted="false">3% Lighting</string>

@@ -67,6 +67,23 @@ else
     echo "set-app-locales gagal; screenshot Bahasa Indonesia dilewati"
 fi
 
+# Tab Kabel di ponsel kecil (360x800 dp, mode gelap, seperti ponsel pemilik): input utama + hasil harus terlihat tanpa scroll.
+adb shell wm size 900x2000
+adb shell wm density 360
+adb shell cmd uimode night yes
+for loc in en-US id-ID; do
+    adb shell cmd locale set-app-locales "$PKG" --locales "$loc" || true
+    adb shell am force-stop "$PKG"
+    adb shell am start -W -n "$PKG/.MainActivity" --ei tab 1 --es pro on
+    sleep 4
+    close_dialogs
+    adb exec-out screencap -p > "$OUT/cable-small-$loc.png"
+done
+adb shell cmd locale set-app-locales "$PKG" --locales en-US || true
+adb shell cmd uimode night no
+adb shell wm size reset
+adb shell wm density reset
+
 # Screenshot khusus fitur Pro (paywall, dialog sambutan trial, chip trial).
 adb shell am force-stop "$PKG"
 adb shell am start -W -n "$PKG/.MainActivity" --ei tab 2 --es pro off --ez paywall true
