@@ -84,6 +84,31 @@ data class CableSizingResult(
   val allOptions: List<SectionOption> = emptyList(),
 )
 
+/** Arus maksimum yang membatasi kapasitas kabel: susut tegangan atau KHA efektif. */
+enum class CapacityLimit { VOLTAGE_DROP, KHA }
+
+/**
+ * Hasil mode balik "kabel ini sanggup berapa": penampang & panjang diketahui, cari arus maksimum.
+ * maxCurrentByDropA = arus saat dV tepat di batas; deratedKhaA = KHA tabel * k_suhu * k_grup (null bila tanpa tabel).
+ */
+data class CableCapacityResult(
+  val circuit: CableCircuit, val sectionMm2: Double, val lengthM: Double, val voltageV: Double, val cosPhi: Double,
+  val maxDropLimitPercent: Double, val maxCurrentByDropA: Double, val deratedKhaA: Double?,
+  /** Arus maksimum = min(batas dV, KHA efektif); tanpa tabel KHA hanya dari dV (belum aman secara termal). */
+  val maxCurrentA: Double, val limitedBy: CapacityLimit,
+  /** Daya beban maksimum (kW) pada [maxCurrentA]: DC V*I, 1F V*I*cos φ, 3F √3*V*I*cos φ. */
+  val maxPowerKw: Double,
+  /** Susut tegangan (%) pada [maxCurrentA]. */
+  val dropAtMaxPercent: Double,
+  /** Panjang maksimum (m) agar dV tetap di batas saat arus = KHA efektif; null bila tanpa tabel. */
+  val maxLengthAtKhaM: Double?,
+)
+
+sealed class CableCapacityOutcome {
+  data class Success(val result: CableCapacityResult) : CableCapacityOutcome()
+  data class Failure(val error: CableError) : CableCapacityOutcome()
+}
+
 sealed class CableOutcome {
   data class Success(val result: CableSizingResult) : CableOutcome()
   data class Failure(val error: CableError) : CableOutcome()
@@ -115,6 +140,42 @@ object CableCalculator {
     val pf = if (circuit == CableCircuit.DC) 1.0 else cosPhi
     val sinPhi = sqrt((1.0 - pf * pf).coerceAtLeast(0.0))
     return circuit.dropFactor * loadCurrentA * lengthM * (rPerM * pf + reactanceOhmPerM * sinPhi)
+  }
+
+  /** Mode balik: arus & daya maksimum untuk penampang dan panjang tertentu (dV dan, bila ada tabel, KHA). */
+  fun capacity(
+    circuit: CableCircuit, material: ConductorMaterial = ConductorMaterial.COPPER,
+    resistivityMethod: ResistivityMethod = ResistivityMethod.IEC_60364_ANNEX_G,
+    sectionMm2: Double, lengthM: Double?, voltageV: Double?, cosPhi: Double?, maxDropLimitPercent: Double?,
+    khaTable: KhaTable? = null, tempCorrectionFactor: Double? = 1.0, groupCorrectionFactor: Double? = 1.0,
+  ): CableCapacityOutcome {
+    if (voltageV == null || !voltageV.isFinite() || voltageV <= 0.0) return CableCapacityOutcome.Failure(CableError.INVALID_VOLTAGE)
+    if (lengthM == null || !lengthM.isFinite() || lengthM <= 0.0) return CableCapacityOutcome.Failure(CableError.INVALID_LENGTH)
+    if (!sectionMm2.isFinite() || sectionMm2 <= 0.0) return CableCapacityOutcome.Failure(CableError.INVALID_LOAD)
+    val pf = if (circuit == CableCircuit.DC) 1.0 else cosPhi
+    if (pf == null || !pf.isFinite() || pf <= 0.0 || pf > 1.0) return CableCapacityOutcome.Failure(CableError.INVALID_COS_PHI)
+    if (maxDropLimitPercent == null || !maxDropLimitPercent.isFinite() || maxDropLimitPercent <= 0.0 || maxDropLimitPercent >= 100.0) return CableCapacityOutcome.Failure(CableError.INVALID_LIMIT_PERCENT)
+    val khaChecked = khaTable != null
+    if (khaChecked && (tempCorrectionFactor == null || !tempCorrectionFactor.isFinite() || tempCorrectionFactor <= 0.0 || tempCorrectionFactor > 2.0 ||
+        groupCorrectionFactor == null || !groupCorrectionFactor.isFinite() || groupCorrectionFactor <= 0.0 || groupCorrectionFactor > 2.0)
+    ) return CableCapacityOutcome.Failure(CableError.INVALID_CORRECTION_FACTOR)
+
+    // dV linier terhadap I dan L: hitung dV untuk 1 A × 1 m lalu balikkan
+    val dropPerAmpMeter = voltageDropForSection(circuit, material, resistivityMethod, sectionMm2, 1.0, 1.0, pf)
+    val allowedDropV = maxDropLimitPercent / 100.0 * voltageV
+    val iByDrop = allowedDropV / (dropPerAmpMeter * lengthM)
+    val derated = khaTable?.ampsFor(sectionMm2)?.let { it * tempCorrectionFactor!! * groupCorrectionFactor!! }
+    val limitedByKha = derated != null && derated < iByDrop
+    val iMax = if (limitedByKha) derated!! else iByDrop
+    val powerKw = circuit.powerFactor * voltageV * iMax * pf / 1000.0
+    return CableCapacityOutcome.Success(
+      CableCapacityResult(
+        circuit, sectionMm2, lengthM, voltageV, pf, maxDropLimitPercent, iByDrop, derated, iMax,
+        if (limitedByKha) CapacityLimit.KHA else CapacityLimit.VOLTAGE_DROP, powerKw,
+        dropPerAmpMeter * iMax * lengthM / voltageV * 100.0,
+        derated?.let { allowedDropV / (dropPerAmpMeter * it) },
+      ),
+    )
   }
 
   fun calculate(

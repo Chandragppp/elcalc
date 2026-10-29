@@ -1,12 +1,17 @@
 package id.controlengineer.elcalc
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -14,6 +19,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import id.controlengineer.elcalc.core.*
 import kotlinx.coroutines.launch
@@ -31,6 +37,9 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
   var limitText by rememberSaveable { mutableStateOf("5") }
   var kTempText by rememberSaveable { mutableStateOf("1.0") }
   var kGroupText by rememberSaveable { mutableStateOf("1.0") }
+  // Mode: false = cari ukuran kabel dari beban; true = mode balik, kapasitas kabel (penampang + panjang → arus maks)
+  var capacityMode by rememberSaveable { mutableStateOf(false) }
+  var capSectionIdx by rememberSaveable { mutableIntStateOf(CableCalculator.STANDARD_SECTIONS_MM2.indexOf(10.0)) }
 
   // Tabel KHA milik pengguna (tersimpan di perangkat)
   val context = LocalContext.current
@@ -64,6 +73,11 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
     loadMode, parseDecimal(loadText), parseDecimal(cosPhiText), parseDecimal(limitText),
     khaTable, kTemp, kGroup,
   )
+  val capSection = CableCalculator.STANDARD_SECTIONS_MM2[capSectionIdx]
+  val capOutcome = CableCalculator.capacity(
+    circuit, material, rhoMethod, capSection, parseDecimal(lengthText), parseDecimal(voltageText),
+    parseDecimal(cosPhiText), parseDecimal(limitText), khaTable, kTemp, kGroup,
+  )
   val cDc = s(R.string.cable_circuit_dc); val p1 = s(R.string.phase_1p); val p3 = s(R.string.phase_3p)
   val mCu = s(R.string.cable_material_cu); val mAl = s(R.string.cable_material_al)
   val rIec = s(R.string.cable_rho_iec); val rGuide = s(R.string.cable_rho_guide)
@@ -77,6 +91,8 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
   ScreenColumn {
     // Urutan: input yang sering diganti → hasil ukuran kabel → parameter lanjutan (nilai bawaan) di bawah,
     // agar mengganti input dan melihat hasil tidak perlu scroll jauh.
+    val modeSize = s(R.string.cable_mode_size); val modeCap = s(R.string.cable_mode_capacity)
+    ChipRow(listOf(false, true), capacityMode, { if (it) modeCap else modeSize }) { capacityMode = it }
     // Jenis rangkaian: DC kontrol panel, 1 fasa, 3 fasa
     ChipRow(CableCircuit.entries, circuit, { when (it) { CableCircuit.DC -> cDc; CableCircuit.SINGLE_PHASE -> p1; else -> p3 } }) {
       circuit = it
@@ -95,6 +111,10 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
       DecimalField(voltageText, { voltageText = it }, R.string.acp_voltage_label, "cable_voltage_input", isErr(CableError.INVALID_VOLTAGE), Modifier.weight(1f))
       DecimalField(lengthText, { lengthText = it }, R.string.cable_length_label, "cable_length_input", isErr(CableError.INVALID_LENGTH), Modifier.weight(1f))
     }
+    if (capacityMode) {
+      SectionStepper(capSectionIdx) { capSectionIdx = it }
+      CapacityResultCard(capOutcome)
+    } else {
     TwoCol {
       val lRes = if (loadMode == CableLoadInputMode.CURRENT_AMPS) R.string.cable_load_amps_label else R.string.acp_mode_kw
       DecimalField(loadText, { loadText = it }, lRes, "cable_load_input", isErr(CableError.INVALID_LOAD), Modifier.weight(1f))
@@ -175,6 +195,8 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
       }
     }
 
+    }
+
     // Parameter lanjutan: sudah berisi nilai bawaan dan jarang diubah
     Text(s(R.string.cable_advanced_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
     TwoCol {
@@ -248,6 +270,61 @@ fun CableScreen(isPro: Boolean = true, onUnlockPro: () -> Unit = {}) {
       onDelete = { scope.launch { store.delete(name) }; editing = null },
       onDismiss = { editing = null },
     )
+  }
+}
+
+/** Pemilih penampang standar ringkas: ◀ 10 mm² ▶ (melangkah di daftar penampang standar). */
+@Composable
+private fun SectionStepper(index: Int, onChange: (Int) -> Unit) {
+  val sections = CableCalculator.STANDARD_SECTIONS_MM2
+  Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(s(R.string.cable_cap_section_label), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+    FilledTonalButton({ onChange(index - 1) }, enabled = index > 0, modifier = Modifier.testTag("cable_cap_section_minus")) { Text("◀") }
+    Text(
+      "${fmt(sections[index], 2)} mm²", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+      textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 96.dp).testTag("cable_cap_section"),
+    )
+    FilledTonalButton({ onChange(index + 1) }, enabled = index < sections.lastIndex, modifier = Modifier.testTag("cable_cap_section_plus")) { Text("▶") }
+  }
+}
+
+/** Hasil mode balik: arus maksimum (min dari batas ΔV dan KHA efektif), daya maks, dan panjang maks pada KHA. */
+@Composable
+private fun CapacityResultCard(outcome: CableCapacityOutcome) {
+  ResultCard {
+    when (outcome) {
+      is CableCapacityOutcome.Failure -> {
+        val msg = when (outcome.error) {
+          CableError.INVALID_COS_PHI -> s(R.string.err_cosphi)
+          CableError.INVALID_LIMIT_PERCENT -> s(R.string.err_percent)
+          CableError.INVALID_CORRECTION_FACTOR -> s(R.string.err_factor)
+          else -> s(R.string.err_positive)
+        }
+        Text(msg, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("cable_cap_error"))
+      }
+      is CableCapacityOutcome.Success -> {
+        val r = outcome.result
+        Text(s(R.string.cable_cap_max_title), style = MaterialTheme.typography.titleSmall)
+        Text(
+          "${fixed(r.maxCurrentA, 1)} A", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("cable_cap_max"),
+        )
+        Text(
+          if (r.limitedBy == CapacityLimit.KHA) s(R.string.cable_cap_limited_kha)
+          else stringResource(R.string.cable_cap_limited_dv, fixed(r.maxDropLimitPercent, 1)),
+          style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("cable_cap_limit"),
+        )
+        if (r.deratedKhaA == null) {
+          Text(s(R.string.cable_cap_no_kha), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
+        }
+        ValueRow(R.string.cable_cap_power, "${fixed(r.maxPowerKw, 2)} kW")
+        ValueRow(R.string.cable_cap_by_dv, "${fixed(r.maxCurrentByDropA, 1)} A")
+        ValueRow(R.string.cable_cap_kha_eff, r.deratedKhaA?.let { "${fixed(it, 1)} A" } ?: "-")
+        ValueRow(R.string.cable_cap_drop_at_max, "${fixed(r.dropAtMaxPercent, 2)} %")
+        r.maxLengthAtKhaM?.let { ValueRow(R.string.cable_cap_max_length, "${fixed(it, 0)} m") }
+        Text(s(R.string.cable_rec_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      }
+    }
   }
 }
 

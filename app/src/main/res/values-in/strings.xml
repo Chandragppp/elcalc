@@ -235,4 +235,16 @@
 <string name="report_kha_insulation_label">Isolasi</string>
 <string name="report_kha_circuit_label">Jenis Rangkaian</string>
 <string name="report_material_label">Bahan Konduktor</string>
+<string name="cable_mode_size">Cari ukuran kabel</string>
+<string name="cable_mode_capacity">Kapasitas kabel</string>
+<string name="cable_cap_section_label">Penampang kabel</string>
+<string name="cable_cap_max_title">Arus beban maksimum</string>
+<string name="cable_cap_limited_kha">Dibatasi KHA efektif (KHA setelah faktor koreksi)</string>
+<string name="cable_cap_limited_dv">Dibatasi susut tegangan (batas %1$s %%)</string>
+<string name="cable_cap_no_kha">KHA TIDAK DICEK: ukuran ini tidak ada di tabel KHA terpilih. Nilai hanya dari susut tegangan.</string>
+<string name="cable_cap_power">Daya beban maks</string>
+<string name="cable_cap_by_dv">Arus maks menurut batas ΔV</string>
+<string name="cable_cap_kha_eff">KHA efektif</string>
+<string name="cable_cap_drop_at_max">ΔV pada arus maks</string>
+<string name="cable_cap_max_length">Panjang maks pada arus KHA</string>
 </resources>

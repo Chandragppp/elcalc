@@ -360,4 +360,32 @@ class ElectricalCoreTest {
     // Baris header memakai style bold s="1"
     assertTrue(s1Xml.contains("<c r=\"A4\" s=\"1\" t=\"inlineStr\">"))
   }
+
+  @Test
+  fun cableCapacityReverseMode() {
+    // 3F 400 V, Cu 10 mm², 10 m, cos φ 0.85, batas 5 %: dV per A·m = √3 × (0.00225×0.85 + 0.00008×0.5268) = 0.0033855 V
+    val noKha = (CableCalculator.capacity(CableCircuit.THREE_PHASE, sectionMm2 = 10.0, lengthM = 10.0, voltageV = 400.0,
+      cosPhi = 0.85, maxDropLimitPercent = 5.0) as CableCapacityOutcome.Success).result
+    assertEquals(590.75, noKha.maxCurrentByDropA, 0.1)
+    assertEquals(CapacityLimit.VOLTAGE_DROP, noKha.limitedBy)
+    assertEquals(5.0, noKha.dropAtMaxPercent, 1e-9)
+    // Dengan tabel KHA 10 mm² = 50 A: dibatasi KHA; konsisten dengan mode ukuran (50 A, 50 m → 2.12 %)
+    val table = KhaTable("uji", mapOf(10.0 to 50.0))
+    val r = (CableCalculator.capacity(CableCircuit.THREE_PHASE, sectionMm2 = 10.0, lengthM = 10.0, voltageV = 400.0,
+      cosPhi = 0.85, maxDropLimitPercent = 5.0, khaTable = table) as CableCapacityOutcome.Success).result
+    assertEquals(50.0, r.maxCurrentA, 1e-9)
+    assertEquals(CapacityLimit.KHA, r.limitedBy)
+    assertEquals(29.44, r.maxPowerKw, 0.01)
+    assertEquals(118.15, r.maxLengthAtKhaM!!, 0.05)
+    val atFifty = (CableCalculator.capacity(CableCircuit.THREE_PHASE, sectionMm2 = 10.0, lengthM = 50.0, voltageV = 400.0,
+      cosPhi = 0.85, maxDropLimitPercent = 5.0, khaTable = table) as CableCapacityOutcome.Success).result
+    assertEquals(2.12, atFifty.dropAtMaxPercent, 0.01)
+    // DC 24 V, 2.5 mm², 20 m, batas 5 %: I = 1.2 V / (2 × 0.009 Ω/m × 20 m) = 3.333 A
+    val dc = (CableCalculator.capacity(CableCircuit.DC, sectionMm2 = 2.5, lengthM = 20.0, voltageV = 24.0,
+      cosPhi = null, maxDropLimitPercent = 5.0) as CableCapacityOutcome.Success).result
+    assertEquals(3.3333, dc.maxCurrentA, 1e-3)
+    assertEquals(0.08, dc.maxPowerKw, 1e-4)
+    assertEquals(CableCapacityOutcome.Failure(CableError.INVALID_LENGTH), CableCalculator.capacity(CableCircuit.DC,
+      sectionMm2 = 2.5, lengthM = 0.0, voltageV = 24.0, cosPhi = null, maxDropLimitPercent = 5.0))
+  }
 }

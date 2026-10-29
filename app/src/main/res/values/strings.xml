@@ -236,4 +236,16 @@
 <string name="report_kha_insulation_label">Insulation</string>
 <string name="report_kha_circuit_label">System / Circuit</string>
 <string name="report_material_label">Conductor Material</string>
+<string name="cable_mode_size">Find cable size</string>
+<string name="cable_mode_capacity">Cable capacity</string>
+<string name="cable_cap_section_label">Cable section</string>
+<string name="cable_cap_max_title">Maximum load current</string>
+<string name="cable_cap_limited_kha">Limited by effective ampacity (KHA after correction factors)</string>
+<string name="cable_cap_limited_dv">Limited by voltage drop (%1$s %% limit)</string>
+<string name="cable_cap_no_kha">AMPACITY NOT CHECKED: this size is not in the selected KHA table. Value is from voltage drop only.</string>
+<string name="cable_cap_power">Max load power</string>
+<string name="cable_cap_by_dv">Max current by ΔV limit</string>
+<string name="cable_cap_kha_eff">Effective KHA</string>
+<string name="cable_cap_drop_at_max">ΔV at max current</string>
+<string name="cable_cap_max_length">Max length at KHA current</string>
 </resources>

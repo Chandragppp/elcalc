@@ -101,6 +101,25 @@ class UiFlowTest {
     shot("cable-dc-24v")
   }
 
+  // 2a. Mode balik: kabel 10 mm² 10 m 3F 400 V → dibatasi KHA IEC B1 50 A (batas ΔV saja ≈ 590.8 A)
+  @Test
+  fun cableCapacityModeShowsMaxCurrent() {
+    launchProMode("off", tab = 1)
+    click("chip:" + str(R.string.cable_mode_capacity))
+    type("cable_voltage_input", "400")
+    type("cable_length_input", "10")
+    rule.onNodeWithTag("cable_cap_section").assertTextContains("10 mm²", substring = true)
+    rule.onNodeWithTag("cable_cap_max").performScrollTo().assertTextContains("50.0 A", substring = true)
+    rule.onNodeWithTag("cable_cap_limit").assertTextContains(str(R.string.cable_cap_limited_kha))
+    shot("cable-capacity-10mm")
+    // Kabel panjang 300 m: dibatasi susut tegangan
+    type("cable_length_input", "300")
+    rule.onNodeWithTag("cable_cap_max").performScrollTo().assertTextContains("19.7 A", substring = true)
+    click("cable_cap_section_plus")
+    rule.onNodeWithTag("cable_cap_section").assertTextContains("16 mm²", substring = true)
+    shot("cable-capacity-300m")
+  }
+
   // 2b. Tabel KHA buatan pengguna: kabel 5 m 50 A naik dari 1,5 mm² (ΔV saja) ke 16 mm² (KHA 61 A)
   @Test
   fun cableKhaTableDrivesRecommendation() {
